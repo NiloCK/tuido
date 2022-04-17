@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func main() {
@@ -25,19 +26,42 @@ func main() {
 
 	files := getFiles(wdStr, extensions)
 
-	todos := []string{}
+	items := []item{}
 	for _, f := range files {
-		todos = append(todos, getTodos(f)...)
+		items = append(items, getItems(f)...)
 	}
 
-	for _, todo := range todos {
+	for _, todo := range items {
 		fmt.Println(todo)
 	}
 }
 
-func getTodos(file string) []string {
+type status string
+
+const (
+	open     status = "open"
+	checked  status = "checked"
+	ongoing  status = "ongoing"
+	obsolete status = "obsolete"
+)
+
+type item struct {
+	// metadata
+
+	file string
+	line int
+
+	// item data
+
+	raw    string
+	status status
+	due    time.Time
+	tags   []string
+}
+
+func getItems(file string) []item {
 	prefixes := []string{"[ ]", "[@]", "[x]", "[~]", "[?]"}
-	todos := []string{}
+	items := []item{}
 
 	f, err := os.Open(file)
 	if err != nil {
@@ -45,15 +69,25 @@ func getTodos(file string) []string {
 	}
 
 	scanner := bufio.NewScanner(f)
+	line := 1
 	for scanner.Scan() {
 		for _, prefix := range prefixes {
 			if strings.HasPrefix(scanner.Text(), prefix) {
-				todos = append(todos, scanner.Text())
+				items = append(items, item{
+					file: file,
+					line: line,
+
+					raw:    scanner.Text(),
+					status: open,       // todo: switch on prefix
+					tags:   nil,        // todo
+					due:    time.Now(), //todo
+				})
 			}
 		}
+		line++
 	}
 
-	return todos
+	return items
 }
 
 func getFiles(wd string, extensions []string) []string {

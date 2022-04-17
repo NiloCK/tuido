@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
@@ -106,4 +108,18 @@ func getFiles(wd string, extensions []string) []string {
 		return nil
 	})
 	return files
+}
+
+type tuido struct {
+	items []item
+}
+
+func (t tuido) Update(tea.Msg) (tea.Model, tea.Cmd) {
+	return t, nil
+}
+
+func (t tuido) Init() tea.Cmd { return nil }
+
+func (t tuido) View() string {
+	return fmt.Sprintf("%+v", t.items)
 }

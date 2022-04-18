@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -33,8 +32,11 @@ func main() {
 		items = append(items, getItems(f)...)
 	}
 
-	for _, todo := range items {
-		fmt.Println(todo)
+	tuido := tuido{items, 0}
+	prog := tea.NewProgram(tuido)
+
+	if err := prog.Start(); err != nil {
+		panic(err)
 	}
 }
 
@@ -111,15 +113,35 @@ func getFiles(wd string, extensions []string) []string {
 }
 
 type tuido struct {
-	items []item
+	items     []item
+	selection uint
 }
 
-func (t tuido) Update(tea.Msg) (tea.Model, tea.Cmd) {
+func (t tuido) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "up":
+			t.selection--
+		case "down":
+			t.selection++
+		case "q":
+			return t, tea.Quit
+		}
+	}
 	return t, nil
 }
 
 func (t tuido) Init() tea.Cmd { return nil }
 
 func (t tuido) View() string {
-	return fmt.Sprintf("%+v", t.items)
+	ret := ""
+	for i, item := range t.items {
+		if i == int(t.selection) {
+			ret += "> "
+		}
+		ret += item.raw
+		ret += "\n"
+	}
+	return ret
 }

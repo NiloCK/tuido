@@ -67,6 +67,8 @@ func (t tui) View() string {
 	for i, item := range t.items {
 		if i == int(t.selection) {
 			ret += "> "
+		} else {
+			ret += "  "
 		}
 		ret += item.String()
 		ret += "\n"

@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/nilock/tuido/tuido"
 )
 
@@ -32,7 +33,7 @@ func Run() {
 		items = append(items, getItems(f)...)
 	}
 
-	tuido := tui{items, 0}
+	tuido := tui{items, nil, todo, 0}
 	prog := tea.NewProgram(tuido)
 
 	if err := prog.Start(); err != nil {
@@ -40,9 +41,18 @@ func Run() {
 	}
 }
 
+type view string
+
+const (
+	todo view = "todo"
+	done view = "done"
+)
+
 type tui struct {
-	items     []tuido.Item
-	selection uint
+	items           []tuido.Item
+	renderSelection []tuido.Item
+	view            view
+	selection       uint
 }
 
 func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -50,9 +60,11 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "up":
-			t.selection--
+			t.selection-- // [ ] make a fcn w/ border logic
 		case "down":
 			t.selection++
+		case "tab":
+			t.tab()
 		case "q":
 			return t, tea.Quit
 		}
@@ -60,17 +72,59 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return t, nil
 }
 
+// tab cycles the view between todos and dones.
+func (t *tui) tab() {
+
+	if t.view == todo {
+		t.view = done
+	} else if t.view == done {
+		t.view = todo
+	}
+
+}
+
+// populateRenderSelection pulls appropriate items from
+// the global items slice into the renderSelection slice
+// based on their status and the current selected view.
+//
+// [ ] reset currentSelection to something in the range of
+//     the current renderitems
+func (t *tui) populateRenderSelection() {
+	t.renderSelection = []tuido.Item{}
+
+	if t.view == todo {
+		for _, i := range t.items {
+			if i.Satus() == tuido.Ongoing || i.Satus() == tuido.Open {
+				t.renderSelection = append(t.renderSelection, i)
+			}
+		}
+	}
+
+	if t.view == done {
+		for _, i := range t.items {
+			if i.Satus() == tuido.Checked || i.Satus() == tuido.Obsolete {
+				t.renderSelection = append(t.renderSelection, i)
+			}
+		}
+	}
+}
+
 func (t tui) Init() tea.Cmd { return nil }
 
 func (t tui) View() string {
-	ret := ""
-	for i, item := range t.items {
+	selected := lipgloss.NewStyle().Bold(true)
+	t.populateRenderSelection()
+
+	ret := "" // todo: stringbuilder
+	for i, item := range t.renderSelection {
+
 		if i == int(t.selection) {
 			ret += "> "
+			ret += selected.Render(item.String())
 		} else {
 			ret += "  "
+			ret += item.String()
 		}
-		ret += item.String()
 		ret += "\n"
 	}
 	return ret

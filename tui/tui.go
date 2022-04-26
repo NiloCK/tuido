@@ -95,6 +95,14 @@ func (t *tui) tab() {
 		t.view = todo
 	}
 
+	t.populateRenderSelection()
+}
+
+func (t *tui) currentSelection() *tuido.Item {
+	if len(t.renderSelection) == 0 {
+		t.populateRenderSelection()
+	}
+	return t.renderSelection[t.selection]
 }
 
 // populateRenderSelection pulls appropriate items from
@@ -104,7 +112,7 @@ func (t *tui) tab() {
 // [ ] reset currentSelection to something in the range of
 //     the current renderitems
 func (t *tui) populateRenderSelection() {
-	t.renderSelection = []tuido.Item{}
+	t.renderSelection = []*tuido.Item{}
 
 	if t.view == todo {
 		for _, i := range t.items {

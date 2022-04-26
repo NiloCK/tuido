@@ -14,6 +14,41 @@ const (
 	unknown  status = "unknown"
 )
 
+func (s status) toString() string {
+	switch s {
+
+	case Open:
+		return "[ ]"
+	case Ongoing:
+		return "[@]"
+	case Checked:
+		return "[x]"
+	case Obsolete:
+		return "[~]"
+	case unknown:
+		return "[?]"
+	default:
+		return ""
+	}
+}
+func strToStatus(s string) status {
+	s = s[:3]
+
+	if s == "[ ]" {
+		return Open
+	}
+	if s == "[@]" {
+		return Ongoing
+	}
+	if s == "[x]" || s == "[X]" {
+		return Checked
+	}
+	if s == "[~]" {
+		return Obsolete
+	}
+	return unknown
+}
+
 type Item struct {
 	// metadata
 
@@ -22,10 +57,9 @@ type Item struct {
 
 	// item data
 
-	raw    string
-	status status
-	due    time.Time
-	tags   []string
+	raw  string
+	due  time.Time
+	tags []string
 }
 
 // Status returns the status of the item. One of:
@@ -34,6 +68,9 @@ type Item struct {
 //  - checked (ie, completed)
 //  - obsolete (ie, no longer necessary)
 func (i Item) Satus() status {
+	return strToStatus(i.raw)
+}
+
 
 	if i.raw[1] == ' ' {
 		return Open
@@ -61,10 +98,9 @@ func New(
 	raw string,
 ) Item {
 	return Item{
-		file:   file,
-		line:   line,
-		raw:    raw,
-		due:    time.Now(), // todo
-		status: Open,       // todo
+		file: file,
+		line: line,
+		raw:  raw,
+		due:  time.Now(), // todo
 	}
 }

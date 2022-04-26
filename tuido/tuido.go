@@ -1,6 +1,9 @@
 package tuido
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"time"
 )
 
@@ -71,25 +74,56 @@ func (i Item) Satus() status {
 	return strToStatus(i.raw)
 }
 
+func (i *Item) SetStatus(s status) error {
+	// [ ] refactor file manipulation as own fcn (pkg)
+	// approx: fInsert(file, lineNumber, expected, updated)
 
-	if i.raw[1] == ' ' {
-		return Open
+	f, err := os.OpenFile(i.file, os.O_RDWR, os.ModeExclusive)
+	defer f.Close()
+
+	if err != nil {
+		fmt.Printf("error opening file for setStatus: %s", err)
+		return err
 	}
-	if i.raw[1] == '@' {
-		return Ongoing
-	}
-	if i.raw[1] == '~' {
-		return Obsolete
-	}
-	if i.raw[1] == 'x' || i.raw[1] == 'X' {
-		return Checked
+	scanner := bufio.NewScanner(f)
+
+	lines := []string{""} // blank line to offset
+
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
 	}
 
-	return unknown
+	if lines[i.line] != i.raw {
+		fmt.Printf("error finding todo: %s != %s", lines[i.line], i.raw)
+		return fmt.Errorf("todo no longer in expected location...")
+	}
+
+	_, err = f.Seek(0, 0)
+	if err != nil {
+		fmt.Printf("seek error: %s", err)
+	}
+
+	lines[i.line] = s.toString() + i.Text()
+
+	for _, l := range lines[1:] {
+		_, err := f.Write([]byte(l + "\n"))
+		if err != nil {
+			fmt.Printf("error writing to F: %s", err)
+			return err
+		}
+	}
+
+	i.raw = s.toString() + i.Text()
+
+	return nil
 }
 
 func (i Item) String() string {
 	return i.raw
+}
+
+func (i Item) Text() string {
+	return i.raw[3:]
 }
 
 func New(

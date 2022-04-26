@@ -65,6 +65,20 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.selection++
 		case "tab":
 			t.tab()
+		case "x":
+			t.currentSelection().SetStatus(tuido.Checked)
+		case "-":
+			t.currentSelection().SetStatus(tuido.Obsolete)
+		case "~":
+			t.currentSelection().SetStatus(tuido.Obsolete)
+		case "s":
+			t.currentSelection().SetStatus(tuido.Obsolete)
+		case "@":
+			t.currentSelection().SetStatus(tuido.Ongoing)
+		case "a":
+			t.currentSelection().SetStatus(tuido.Ongoing)
+		case " ":
+			t.currentSelection().SetStatus(tuido.Open)
 		case "q":
 			return t, tea.Quit
 		}

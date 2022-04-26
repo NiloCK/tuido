@@ -28,7 +28,7 @@ func Run() {
 
 	files := getFiles(wdStr, extensions)
 
-	items := []tuido.Item{}
+	items := []*tuido.Item{}
 	for _, f := range files {
 		items = append(items, getItems(f)...)
 	}
@@ -49,8 +49,8 @@ const (
 )
 
 type tui struct {
-	items           []tuido.Item
-	renderSelection []tuido.Item
+	items           []*tuido.Item
+	renderSelection []*tuido.Item
 	view            view
 	selection       uint
 }
@@ -135,7 +135,9 @@ func (t tui) Init() tea.Cmd { return nil }
 
 func (t tui) View() string {
 	selected := lipgloss.NewStyle().Bold(true)
-	t.populateRenderSelection()
+	if len(t.renderSelection) == 0 { // init population
+		t.populateRenderSelection()
+	}
 
 	ret := "" // todo: stringbuilder
 	for i, item := range t.renderSelection {
@@ -152,9 +154,9 @@ func (t tui) View() string {
 	return ret
 }
 
-func getItems(file string) []tuido.Item {
+func getItems(file string) []*tuido.Item {
 	prefixes := []string{"[ ]", "[@]", "[x]", "[~]", "[?]"}
-	items := []tuido.Item{}
+	items := []*tuido.Item{}
 
 	f, err := os.Open(file)
 	defer f.Close()
@@ -168,7 +170,8 @@ func getItems(file string) []tuido.Item {
 	for scanner.Scan() {
 		for _, prefix := range prefixes {
 			if strings.HasPrefix(scanner.Text(), prefix) {
-				items = append(items, tuido.New(file, line, scanner.Text()))
+				item := tuido.New(file, line, scanner.Text())
+				items = append(items, &item)
 			}
 		}
 		line++

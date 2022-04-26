@@ -135,6 +135,8 @@ func getItems(file string) []tuido.Item {
 	items := []tuido.Item{}
 
 	f, err := os.Open(file)
+	defer f.Close()
+
 	if err != nil {
 		panic(err)
 	}

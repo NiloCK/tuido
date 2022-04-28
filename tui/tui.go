@@ -33,8 +33,7 @@ func Run() {
 		items = append(items, getItems(f)...)
 	}
 
-	tuido := tui{items, nil, todo, 0}
-	prog := tea.NewProgram(tuido)
+	prog := tea.NewProgram(tuido, tea.WithAltScreen())
 
 	if err := prog.Start(); err != nil {
 		panic(err)

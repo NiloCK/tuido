@@ -52,17 +52,22 @@ type tui struct {
 	items           []*tuido.Item
 	renderSelection []*tuido.Item
 	view            view
-	selection       uint
+	selection       int
 }
 
 func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	t.populateRenderSelection()
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "up":
-			t.selection-- // [ ] make a fcn w/ border logic
+			if t.selection > 0 {
+				t.selection--
+			}
 		case "down":
-			t.selection++
+			if t.selection+1 < len(t.renderSelection) {
+				t.selection++
+			}
 		case "tab":
 			t.tab()
 		case "x":
@@ -108,9 +113,6 @@ func (t *tui) currentSelection() *tuido.Item {
 // populateRenderSelection pulls appropriate items from
 // the global items slice into the renderSelection slice
 // based on their status and the current selected view.
-//
-// [ ] reset currentSelection to something in the range of
-//     the current renderitems
 func (t *tui) populateRenderSelection() {
 	t.renderSelection = []*tuido.Item{}
 
@@ -128,6 +130,10 @@ func (t *tui) populateRenderSelection() {
 				t.renderSelection = append(t.renderSelection, i)
 			}
 		}
+	}
+
+	if t.selection+1 >= len(t.renderSelection) {
+		t.selection = len(t.renderSelection) - 1
 	}
 }
 

@@ -139,13 +139,37 @@ func (t *tui) populateRenderSelection() {
 
 func (t tui) Init() tea.Cmd { return nil }
 
+var (
+	tabStyle       lipgloss.Style = lipgloss.NewStyle().MarginLeft(3)
+	activeTabStyle lipgloss.Style = tabStyle.Copy().Bold(true)
+	tabsStyle      lipgloss.Style = lipgloss.NewStyle().MarginBottom(1)
+)
+
+func (t tui) header() string {
+	ret := ""
+
+	if t.view == todo {
+		ret += activeTabStyle.Render(string(todo))
+	} else {
+		ret += tabStyle.Render(string(todo))
+	}
+
+	if t.view == done {
+		ret += activeTabStyle.Render(string(done))
+	} else {
+		ret += tabStyle.Render(string(done))
+	}
+
+	return tabsStyle.Render(ret) + "\n"
+}
+
 func (t tui) View() string {
 	selected := lipgloss.NewStyle().Bold(true)
 	if len(t.renderSelection) == 0 { // init population
 		t.populateRenderSelection()
 	}
 
-	ret := "" // todo: stringbuilder
+	ret := t.header() // todo: stringbuilder
 	for i, item := range t.renderSelection {
 
 		if i == int(t.selection) {

@@ -52,6 +52,10 @@ type tui struct {
 	renderSelection []*tuido.Item
 	view            view
 	selection       int
+	// height of the window
+	h int
+	// width of the window
+	w int
 }
 
 func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -86,6 +90,9 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q":
 			return t, tea.Quit
 		}
+	case tea.WindowSizeMsg:
+		t.h = msg.Height
+		t.w = msg.Width
 	}
 	return t, nil
 }

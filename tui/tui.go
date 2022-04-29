@@ -146,27 +146,62 @@ func (t *tui) populateRenderSelection() {
 func (t tui) Init() tea.Cmd { return nil }
 
 var (
-	tabStyle       lipgloss.Style = lipgloss.NewStyle().MarginLeft(3)
-	activeTabStyle lipgloss.Style = tabStyle.Copy().Bold(true)
-	tabsStyle      lipgloss.Style = lipgloss.NewStyle().MarginBottom(1)
+	activeTabBorder = lipgloss.Border{
+		Top:         "─",
+		Bottom:      " ",
+		Left:        "│",
+		Right:       "│",
+		TopLeft:     "╭",
+		TopRight:    "╮",
+		BottomLeft:  "┘",
+		BottomRight: "└",
+	}
+
+	tabBorder = lipgloss.Border{
+		Top:         "─",
+		Bottom:      "─",
+		Left:        "│",
+		Right:       "│",
+		TopLeft:     "╭",
+		TopRight:    "╮",
+		BottomLeft:  "┴",
+		BottomRight: "┴",
+	}
+
+	tabStyle       lipgloss.Style = lipgloss.NewStyle().Border(tabBorder).Padding(0, 2)
+	activeTabStyle lipgloss.Style = tabStyle.Copy().Bold(true).Border(activeTabBorder, true)
+
+	tabGapStyle lipgloss.Style = tabStyle.Copy().BorderTop(false).BorderLeft(false).BorderRight(false)
 )
 
 func (t tui) header() string {
-	ret := ""
+	var todoTab, doneTab string
 
 	if t.view == todo {
-		ret += activeTabStyle.Render(string(todo))
+		todoTab = activeTabStyle.Render(string(todo))
 	} else {
-		ret += tabStyle.Render(string(todo))
+		todoTab = tabStyle.Render(string(todo))
 	}
 
 	if t.view == done {
-		ret += activeTabStyle.Render(string(done))
+		doneTab = activeTabStyle.Render(string(done))
 	} else {
-		ret += tabStyle.Render(string(done))
+		doneTab = tabStyle.Render(string(done))
 	}
 
-	return tabsStyle.Render(ret) + "\n"
+	tabs := lipgloss.JoinHorizontal(lipgloss.Bottom, todoTab, doneTab)
+
+	gap := tabGapStyle.Render(strings.Repeat(" ", max(0, t.w-lipgloss.Width(tabs)-2)))
+
+	return lipgloss.JoinHorizontal(lipgloss.Bottom, tabs, gap) + "\n\n"
+
+}
+
+func max(a, b int) int {
+	if a >= b {
+		return a
+	}
+	return b
 }
 
 func (t tui) View() string {

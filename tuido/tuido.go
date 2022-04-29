@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -126,6 +127,10 @@ func (i Item) Text() string {
 	return i.raw[3:]
 }
 
+func (i Item) Tags() []string {
+	return Tags(i.Text())
+}
+
 func New(
 	file string,
 	line int,
@@ -137,4 +142,17 @@ func New(
 		raw:  raw,
 		due:  time.Now(), // todo
 	}
+}
+
+func Tags(s string) []string {
+	tags := []string{}
+	split := strings.Split(s, " ")
+
+	for _, token := range split {
+		if strings.HasPrefix(token, "#") && len(token) > 1 {
+			tags = append(tags, token[1:])
+		}
+	}
+
+	return tags
 }

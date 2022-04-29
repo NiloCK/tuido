@@ -6,7 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/nilock/tuido/tuido"
 )
@@ -32,8 +34,7 @@ func Run() {
 		items = append(items, getItems(f)...)
 	}
 
-	tuido := tui{items, nil, todo, 0, 0, 0}
-	prog := tea.NewProgram(tuido, tea.WithAltScreen())
+	prog := tea.NewProgram(newTUI(items), tea.WithAltScreen())
 
 	if err := prog.Start(); err != nil {
 		panic(err)
@@ -47,11 +48,29 @@ const (
 	done view = "done"
 )
 
+func newTUI(items []*tuido.Item) tui {
+	filter := textinput.New()
+	filter.Placeholder = "filter by #tag. press /"
+
+	return tui{
+		items:           items,
+		renderSelection: nil,
+		view:            todo,
+		selection:       0,
+		filter:          filter,
+		h:               0,
+		w:               0,
+	}
+}
+
 type tui struct {
 	items           []*tuido.Item
 	renderSelection []*tuido.Item
 	view            view
 	selection       int
+
+	filter textinput.Model
+
 	// height of the window
 	h int
 	// width of the window
@@ -62,6 +81,20 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	t.populateRenderSelection()
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		if t.filter.Focused() {
+			k := msg.String()
+			if k == "esc" ||
+				k == "tab" ||
+				k == "down" {
+				t.filter.Blur()
+			} else {
+				var cmd tea.Cmd
+				t.filter, cmd = t.filter.Update(msg)
+
+				return t, cmd
+			}
+		}
+
 		switch msg.String() {
 		case "up":
 			if t.selection > 0 {
@@ -87,9 +120,12 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.currentSelection().SetStatus(tuido.Ongoing)
 		case " ":
 			t.currentSelection().SetStatus(tuido.Open)
+		case "/":
+			t.filter.Focus()
 		case "q":
 			return t, tea.Quit
 		}
+
 	case tea.WindowSizeMsg:
 		t.h = msg.Height
 		t.w = msg.Width
@@ -138,12 +174,34 @@ func (t *tui) populateRenderSelection() {
 		}
 	}
 
+	filterTags := tuido.Tags(t.filter.Value())
+	if len(filterTags) != 0 {
+
+		filtered := []*tuido.Item{}
+
+		for _, item := range t.renderSelection {
+			itemTags := item.Tags()
+
+			for _, iTag := range itemTags {
+				for _, fTag := range filterTags {
+					// [ ] should not use the prefix when a tag is "complete" (followed by a space) in the prompt
+					if strings.HasPrefix(iTag, fTag) {
+						filtered = append(filtered, item)
+						continue
+					}
+				}
+			}
+		}
+
+		t.renderSelection = filtered
+	}
+
 	if t.selection+1 >= len(t.renderSelection) {
 		t.selection = len(t.renderSelection) - 1
 	}
 }
 
-func (t tui) Init() tea.Cmd { return nil }
+func (t tui) Init() tea.Cmd { return textinput.Blink }
 
 func getItems(file string) []*tuido.Item {
 	prefixes := []string{"[ ]", "[@]", "[x]", "[~]", "[?]"}

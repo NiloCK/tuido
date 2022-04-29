@@ -6,7 +6,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
+var ( // header styles
 	activeTabBorder = lipgloss.Border{
 		Top:         "─",
 		Bottom:      " ",
@@ -50,7 +50,7 @@ func (t tui) header() string {
 		doneTab = tabStyle.Render(string(done))
 	}
 
-	tabs := lipgloss.JoinHorizontal(lipgloss.Bottom, todoTab, doneTab)
+	tabs := lipgloss.JoinHorizontal(lipgloss.Bottom, todoTab, doneTab, tabGapStyle.Render(t.filter.View()))
 
 	gap := tabGapStyle.Render(strings.Repeat(" ", max(0, t.w-lipgloss.Width(tabs)-2)))
 

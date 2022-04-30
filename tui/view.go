@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
+	"github.com/nilock/tuido/tuido"
 )
 
 var ( // header styles
@@ -69,13 +70,25 @@ func (t tui) View() string {
 
 		if i == int(t.selection) {
 			ret += "> "
-			ret += selected.Render(item.String())
+			ret += selected.Render(t.renderTuido(*item)) // [ ]: `selected` style does not apply past the first tag
 		} else {
 			ret += "  "
-			ret += item.String()
+			ret += t.renderTuido(*item)
 		}
 		ret += "\n"
 	}
+	return ret
+}
+
+// renderTuido applies tagColor to the items tags and returns the text
+func (t tui) renderTuido(item tuido.Item) string {
+	ret := item.String()
+	tags := item.Tags()
+
+	for _, tag := range tags {
+		ret = strings.ReplaceAll(ret, "#"+tag, t.tagColors[tag].Render("#"+tag))
+	}
+
 	return ret
 }
 

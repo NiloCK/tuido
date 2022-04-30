@@ -3,6 +3,7 @@ package tui
 import (
 	"bufio"
 	"io/fs"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
@@ -10,6 +11,8 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/lucasb-eyer/go-colorful"
 	"github.com/nilock/tuido/tuido"
 )
 
@@ -48,7 +51,12 @@ const (
 	done view = "done"
 )
 
+func init() {
+	rand.Seed(time.Now().Unix()) // a fresh set of tag colors on each run. Spice of life.
+}
+
 func newTUI(items []*tuido.Item) tui {
+	// the search bar:
 	filter := textinput.New()
 	filter.Placeholder = "filter by #tag. press /"
 
@@ -58,9 +66,34 @@ func newTUI(items []*tuido.Item) tui {
 		view:            todo,
 		selection:       0,
 		filter:          filter,
+		tagColors:       populateTagColorStyles(items),
 		h:               0,
 		w:               0,
 	}
+}
+
+// populateTagColorStyles returns a coloring style for
+// each #tag that exists in the list of items.
+func populateTagColorStyles(items []*tuido.Item) map[string]lipgloss.Style {
+	var tags []string
+	for _, item := range items {
+		tags = append(tags, item.Tags()...)
+	}
+
+	tagColors := map[string]lipgloss.Style{}
+	interval := 360.0 / float64(len(tags))
+	offset := rand.Float64() * 360
+
+	for i, tag := range tags {
+		hue := int(offset+float64(i)*interval) % 360
+		tagColors[tag] = lipgloss.NewStyle().
+			Foreground(
+				lipgloss.Color(
+					colorful.Hcl(float64(hue), .9, 0.85).Clamped().Hex(),
+				),
+			)
+	}
+	return tagColors
 }
 
 type tui struct {
@@ -70,6 +103,8 @@ type tui struct {
 	selection       int
 
 	filter textinput.Model
+
+	tagColors map[string]lipgloss.Style
 
 	// height of the window
 	h int

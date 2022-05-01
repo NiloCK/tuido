@@ -144,23 +144,36 @@ func (i Item) Tags() []string {
 // [ ] #maybe include a language map for code-comment parsing. ie, {".rb": "#", ".go": "//"}
 // [ ] #maybe require a file extension for this fcn. Allows for PL specific rules, as well as md
 func IsTuido(raw string) bool {
-	// allow leading whitespace & markdown bullet list identifiers.
-	trimmed := strings.TrimLeft(raw, " \t")
-	if strings.HasPrefix(trimmed, "- ") {
-		trimmed = trimmed[2:]
-	}
-
-	// allow go (c, java, js, ts, etc) style inlne comments
-	if strings.Contains(trimmed, "// ") {
-		split := strings.Split(trimmed, "// ")
-		trimmed = strings.Join(split[1:], "// ") // only the leading instance begins a comment
-	}
+	trimmed := trim(raw)
 
 	for _, status := range statuses {
 		if strings.HasPrefix(trimmed, status.toString()) {
 			return true
 		}
 	}
+
+	return false
+}
+
+// trim left-prepares a string for tuido item parsing
+//
+// [ ] #test w/ expected in-outs
+func trim(raw string) string {
+	// remove leading whitespace & markdown bullet list identifiers.
+	trimmed := strings.TrimLeft(raw, " \t")
+	if strings.HasPrefix(trimmed, "- ") {
+		trimmed = trimmed[2:]
+	}
+
+	// remove non-comment content from go (c, java, js, ts, etc)
+	// style inlne commented lines
+	if strings.Contains(trimmed, "// ") {
+		split := strings.Split(trimmed, "// ")
+		trimmed = strings.Join(split[1:], "// ") // only the leading instance begins a comment
+	}
+
+	return trimmed
+}
 
 	return false
 }

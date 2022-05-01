@@ -44,14 +44,17 @@ func Run() {
 	}
 }
 
-type view string
+type itemType string
 
 const (
-	todo view = "todo"
-	done view = "done"
+	todo itemType = "todo"
+	done itemType = "done"
 )
 
 func init() {
+	// home := os.Getenv("HOME")
+	// tdpath := path.Join(home, ".tuido")
+
 	rand.Seed(time.Now().Unix()) // a fresh set of tag colors on each run. Spice of life.
 }
 
@@ -63,7 +66,8 @@ func newTUI(items []*tuido.Item) tui {
 	return tui{
 		items:           items,
 		renderSelection: nil,
-		view:            todo,
+		itemsFilter:     todo,
+		mode:            navigation,
 		selection:       0,
 		filter:          filter,
 		tagColors:       populateTagColorStyles(items),
@@ -96,11 +100,21 @@ func populateTagColorStyles(items []*tuido.Item) map[string]lipgloss.Style {
 	return tagColors
 }
 
+type mode int
+
+const (
+	navigation mode = iota
+	filter
+	help
+)
+
 type tui struct {
 	items           []*tuido.Item
 	renderSelection []*tuido.Item
-	view            view
+	itemsFilter     itemType
 	selection       int
+
+	mode mode
 
 	filter textinput.Model
 
@@ -113,6 +127,13 @@ type tui struct {
 }
 
 func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if t.mode == help {
+		if _, ok := msg.(tea.KeyMsg); ok {
+			t.mode = navigation
+			return t, nil
+		}
+	}
+
 	t.populateRenderSelection()
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -157,6 +178,8 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.currentSelection().SetStatus(tuido.Open)
 		case "/":
 			t.filter.Focus()
+		case "?":
+			t.mode = help
 		case "q":
 			return t, tea.Quit
 		}
@@ -171,10 +194,10 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 // tab cycles the view between todos and dones.
 func (t *tui) tab() {
 
-	if t.view == todo {
-		t.view = done
-	} else if t.view == done {
-		t.view = todo
+	if t.itemsFilter == todo {
+		t.itemsFilter = done
+	} else if t.itemsFilter == done {
+		t.itemsFilter = todo
 	}
 
 	t.populateRenderSelection()
@@ -193,7 +216,7 @@ func (t *tui) currentSelection() *tuido.Item {
 func (t *tui) populateRenderSelection() {
 	t.renderSelection = []*tuido.Item{}
 
-	if t.view == todo {
+	if t.itemsFilter == todo {
 		for _, i := range t.items {
 			if i.Satus() == tuido.Ongoing || i.Satus() == tuido.Open {
 				t.renderSelection = append(t.renderSelection, i)
@@ -201,7 +224,7 @@ func (t *tui) populateRenderSelection() {
 		}
 	}
 
-	if t.view == done {
+	if t.itemsFilter == done {
 		for _, i := range t.items {
 			if i.Satus() == tuido.Checked || i.Satus() == tuido.Obsolete {
 				t.renderSelection = append(t.renderSelection, i)

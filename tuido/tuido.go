@@ -74,12 +74,13 @@ type Item struct {
 //  - checked (ie, completed)
 //  - obsolete (ie, no longer necessary)
 func (i Item) Satus() status {
-	return strToStatus(i.raw)
+	return strToStatus(i.trimmed())
 }
 
 func (i *Item) SetStatus(s status) error {
 	// [ ] refactor file manipulation as own fcn (pkg)
 	// approx: fInsert(file, lineNumber, expected, updated)
+	newRaw := i.scrap() + s.toString() + i.Text()
 
 	f, err := os.OpenFile(i.file, os.O_RDWR, os.ModeExclusive)
 	defer f.Close()
@@ -98,7 +99,7 @@ func (i *Item) SetStatus(s status) error {
 
 	if lines[i.line] != i.raw {
 		fmt.Printf("error finding todo: %s != %s", lines[i.line], i.raw)
-		return fmt.Errorf("todo no longer in expected location...")
+		return fmt.Errorf("todo no longer in expected location, or changed on disk...")
 	}
 
 	_, err = f.Seek(0, 0)
@@ -106,7 +107,7 @@ func (i *Item) SetStatus(s status) error {
 		fmt.Printf("seek error: %s", err)
 	}
 
-	lines[i.line] = s.toString() + i.Text()
+	lines[i.line] = newRaw
 
 	for _, l := range lines[1:] {
 		_, err := f.Write([]byte(l + "\n"))
@@ -116,17 +117,25 @@ func (i *Item) SetStatus(s status) error {
 		}
 	}
 
-	i.raw = s.toString() + i.Text()
+	i.raw = newRaw
 
 	return nil
 }
 
+// String returns the item status box plus body text. EG, for the item
+//  - [x] this one
+//
+// String() returns "[x] this one"
 func (i Item) String() string {
-	return i.raw
+	return i.trimmed()
 }
 
+// Text returns the item's body text. EG, for item
+//  - [x] this one is done
+//
+// the Text() is "this one is done"
 func (i Item) Text() string {
-	return i.raw[3:]
+	return i.trimmed()[3:]
 }
 
 func (i Item) Tags() []string {
@@ -175,7 +184,12 @@ func trim(raw string) string {
 	return trimmed
 }
 
-	return false
+func (i Item) trimmed() string {
+	return trim(i.raw)
+}
+
+func (i Item) scrap() string {
+	return strings.Replace(i.raw, i.trimmed(), "", 1)
 }
 
 func New(

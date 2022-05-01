@@ -7,6 +7,8 @@ A terminal interface for efficient browsing and management of [[x]it!](https://g
 - [x] allows for updating todo status, and persists the updates to the original files
 - [x] allows for filtering via `tags`
 
+![tuidi preview](./preview.gif)
+
 ## Usage
 
 From some directory containing `[x]it!` files / items:

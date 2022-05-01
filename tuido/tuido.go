@@ -77,12 +77,26 @@ func (i Item) Satus() status {
 	return strToStatus(i.trimmed())
 }
 
+// SetStatus writes the updated status to the item's file
+// on disk and updates the status of the in-memory item.
+//
+// If the disk write fails, the in-memory update is abandoned.
 func (i *Item) SetStatus(s status) error {
-	// [ ] refactor file manipulation as own fcn (pkg)
-	// approx: fInsert(file, lineNumber, expected, updated)
 	newRaw := i.scrap() + s.toString() + i.Text()
 
-	f, err := os.OpenFile(i.file, os.O_RDWR, os.ModeExclusive)
+	err := fileInsert(i.file, i.line, i.raw, newRaw)
+	if err != nil {
+		return err
+	}
+
+	i.raw = newRaw
+	return nil
+}
+
+// fileInsert replaces the lineNumberth line of file with updated, as long
+// it finds that the current contents of that line are as expected.
+func fileInsert(file string, lineNumber int, expected string, updated string) error {
+	f, err := os.OpenFile(file, os.O_RDWR, os.ModeExclusive)
 	defer f.Close()
 
 	if err != nil {
@@ -97,8 +111,8 @@ func (i *Item) SetStatus(s status) error {
 		lines = append(lines, scanner.Text())
 	}
 
-	if lines[i.line] != i.raw {
-		fmt.Printf("error finding todo: %s != %s", lines[i.line], i.raw)
+	if lines[lineNumber] != expected {
+		fmt.Printf("error finding todo: %s != %s", lines[lineNumber], expected)
 		return fmt.Errorf("todo no longer in expected location, or changed on disk...")
 	}
 
@@ -107,18 +121,14 @@ func (i *Item) SetStatus(s status) error {
 		fmt.Printf("seek error: %s", err)
 	}
 
-	lines[i.line] = newRaw
+	lines[lineNumber] = updated
 
 	for _, l := range lines[1:] {
 		_, err := f.Write([]byte(l + "\n"))
 		if err != nil {
-			fmt.Printf("error writing to F: %s", err)
 			return err
 		}
 	}
-
-	i.raw = newRaw
-
 	return nil
 }
 

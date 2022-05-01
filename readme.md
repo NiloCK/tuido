@@ -20,6 +20,7 @@ It doesn't yet: (roadmap)
   - [ ] (for creation date) from the names of an item's source file
 - [ ] sort items by priority, age, or due dates
 - [ ] allow plain-text fuzzy text search/filter of item body text (only tag names)
+- [ ] have a pomodoro mode for focused work on a specific item
 - [ ] specify / parse a format for recurring items (call mom, eat a salad)
 - [ ] parse valued tags. EG, `#age=37` is parsed as a tag titled `age=37` rather than tag `age` with value `37`.
 - [ ] contain the all-important [__z__: snooze] operation to bump an item's due date

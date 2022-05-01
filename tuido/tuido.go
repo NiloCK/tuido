@@ -18,6 +18,8 @@ const (
 	unknown  status = "unknown"
 )
 
+var statuses []status = []status{Open, Ongoing, Checked, Obsolete}
+
 func (s status) toString() string {
 	switch s {
 
@@ -129,6 +131,38 @@ func (i Item) Text() string {
 
 func (i Item) Tags() []string {
 	return Tags(i.Text())
+}
+
+// IsTuido inspects a raw string for parsibility into a tuido item.
+// It relaxes the [x]it spec in the following ways:
+//  - leading whitespace is allowed
+//  - markdown style bulleted items are allowed
+//  - golang inline "//" comments are parsed for items
+//
+// [ ] unit #test this w/ a bunch of expected passes & failures
+// [ ] #maybe allow numbered md lists (1. [ ] ...)
+// [ ] #maybe include a language map for code-comment parsing. ie, {".rb": "#", ".go": "//"}
+// [ ] #maybe require a file extension for this fcn. Allows for PL specific rules, as well as md
+func IsTuido(raw string) bool {
+	// allow leading whitespace & markdown bullet list identifiers.
+	trimmed := strings.TrimLeft(raw, " \t")
+	if strings.HasPrefix(trimmed, "- ") {
+		trimmed = trimmed[2:]
+	}
+
+	// allow go (c, java, js, ts, etc) style inlne comments
+	if strings.Contains(trimmed, "// ") {
+		split := strings.Split(trimmed, "// ")
+		trimmed = strings.Join(split[1:], "// ") // only the leading instance begins a comment
+	}
+
+	for _, status := range statuses {
+		if strings.HasPrefix(trimmed, status.toString()) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func New(

@@ -262,7 +262,6 @@ func (t *tui) populateRenderSelection() {
 func (t tui) Init() tea.Cmd { return textinput.Blink }
 
 func getItems(file string) []*tuido.Item {
-	prefixes := []string{"[ ]", "[@]", "[x]", "[~]", "[?]"}
 	items := []*tuido.Item{}
 
 	f, err := os.Open(file)
@@ -275,11 +274,9 @@ func getItems(file string) []*tuido.Item {
 	scanner := bufio.NewScanner(f)
 	line := 1
 	for scanner.Scan() {
-		for _, prefix := range prefixes {
-			if strings.HasPrefix(scanner.Text(), prefix) {
-				item := tuido.New(file, line, scanner.Text())
-				items = append(items, &item)
-			}
+		if tuido.IsTuido(scanner.Text()) {
+			item := tuido.New(file, line, scanner.Text())
+			items = append(items, &item)
 		}
 		line++
 	}

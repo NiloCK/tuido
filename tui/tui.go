@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"math/rand"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -25,6 +26,12 @@ func Run() {
 		"xit",
 	}
 	// todo: flag for added extensions / extension specificity
+
+	// special case for development:
+	// parse .go files when the current directory is the project itself
+	if path.Base(wdStr) == "tuido" {
+		extensions = append(extensions, "go")
+	}
 
 	if err != nil {
 		panic(err)

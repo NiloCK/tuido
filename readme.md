@@ -8,16 +8,16 @@ tuido
 
 It:
 
-- [x] searches the working directory recursively for [x]it! compatible items in `.xit`, `.md`, and `.txt` files
-- [x] compactly displays pending todos and offers navigation between `todo` and `done`
-- [x] allows for updating todo status, and persists the updates to the original files
-- [x] allows for filtering via `#tags`
+- [ ] searches the working directory recursively for [x]it! compatible items in `.xit`, `.md`, and `.txt` files
+- [ ] compactly displays pending todos and offers navigation between `todo` and `done`
+- [ ] allows for updating todo status, and persists the updates to the original files
+- [ ] allows for filtering via `#tags`
 
 It doesn't yet: (roadmap)
 
-- [ ] process dates
-  - [ ] from items themselves, according to [x]it spec
-  - [ ] (for creation date) from the names of an item's source file
+[ ] ] process dates
+[ ] [ ] from items themselves, according to [x]it spec
+[ ] [ ] (for creation date) from the names of an item's source file
 - [ ] sort items by priority, age, or due dates
 - [ ] allow plain-text fuzzy text search/filter of item body text (only tag names)
 - [ ] have a pomodoro mode for focused work on a specific item
@@ -28,6 +28,7 @@ It doesn't yet: (roadmap)
 - [ ] have infrastructure for managing task-specific checklist files (beach trip)
 - [ ] accept command line flags or config for other file extenstions, source directories, etc
 - [ ] allow for creating new todos or editing the body text of existing ones
+- [ ] fully respect / implement the [x]it spec
 
 In app controls:
 

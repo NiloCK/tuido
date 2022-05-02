@@ -194,6 +194,10 @@ func trim(raw string) string {
 	return trimmed
 }
 
+func (i Item) Line() int { return i.line }
+
+func (i Item) File() string { return i.file }
+
 func (i Item) trimmed() string {
 	return trim(i.raw)
 }

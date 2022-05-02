@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -61,6 +62,21 @@ func (t tui) header() string {
 	return lipgloss.JoinHorizontal(lipgloss.Bottom, tabs, searchBox, gap, helpPrompt) + "\n\n"
 }
 
+func (t tui) footer() string {
+	footStyle := tabStyle.Copy().BorderBottom(false).BorderLeft(false).BorderRight(false)
+
+	item := t.currentSelection()
+	fStr := footStyle.Render(fmt.Sprintf("%s:%d", item.File(), item.Line()))
+
+	// [ ] the [enter] key here is not actually bound to anything
+	openPrompt := footStyle.Copy().Faint(true).Render("[enter] - inspect item")
+	gap := footStyle.Render(strings.Repeat(" ", max(0, t.w-lipgloss.Width(
+		lipgloss.JoinHorizontal(lipgloss.Bottom, fStr, openPrompt))-5,
+	)))
+
+	return lipgloss.JoinHorizontal(lipgloss.Bottom, fStr, gap, openPrompt)
+}
+
 func (t tui) View() string {
 	switch t.mode {
 	case help:
@@ -90,7 +106,7 @@ func (t tui) View() string {
 			}
 			ret += "\n"
 		}
-		return ret
+		return ret + "\n" + t.footer()
 	}
 }
 

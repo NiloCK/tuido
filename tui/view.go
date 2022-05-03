@@ -59,7 +59,7 @@ func (t tui) header() string {
 		lipgloss.JoinHorizontal(lipgloss.Bottom, tabs, searchBox, helpPrompt))-5),
 	))
 
-	return lipgloss.JoinHorizontal(lipgloss.Bottom, tabs, searchBox, gap, helpPrompt) + "\n\n"
+	return lipgloss.JoinHorizontal(lipgloss.Bottom, tabs, searchBox, gap, helpPrompt)
 }
 
 func (t tui) footer() string {
@@ -78,6 +78,9 @@ func (t tui) footer() string {
 }
 
 func (t tui) View() string {
+	if t.h == 0 {
+		return ""
+	}
 	switch t.mode {
 	case help:
 		ret := "\n[press any key to exit help]\n\n"
@@ -89,25 +92,82 @@ func (t tui) View() string {
 			Render("\ntuido reads txt, md, and xit files from the working directory and locates xit style todo items, allowing for quick navigation and discovery.\n\nUpdating an item's status in tuido writes the corresponding change to disk.")
 		return lipgloss.JoinHorizontal(lipgloss.Top, "  ", ret, "   ", txt)
 	default:
-		selected := lipgloss.NewStyle().Bold(true)
 		if len(t.renderSelection) == 0 { // init population
 			t.populateRenderSelection()
 		}
 
-		ret := t.header() // todo: stringbuilder
-		for i, item := range t.renderSelection {
+		header := t.header()
+		footer := t.footer()
 
-			if i == int(t.selection) {
-				ret += "> "
-				ret += selected.Render(t.renderTuido(*item)) // [ ]: `selected` style does not apply past the first tag
-			} else {
-				ret += "  "
-				ret += t.renderTuido(*item)
-			}
-			ret += "\n"
-		}
-		return ret + "\n" + t.footer()
+		rows := []string{}
+
+		availableHeight := t.h - (lipgloss.Height(header) + lipgloss.Height(footer))
+
+		body := t.renderVisibleListedItems(availableHeight)
+
+		rows = append(rows, header, body, footer)
+		return lipgloss.JoinVertical(lipgloss.Left, rows...)
 	}
+}
+
+func (t tui) renderVisibleListedItems(availableHeight int) string {
+	// [ ] needs rendering (somewhere - footer? tab?) of page #
+	renderedItems := t.renderedItemCollection()
+
+	pages := []string{}
+	newPage := ""
+
+	for _, renderedItem := range renderedItems {
+		added := ""
+		if newPage == "" {
+			added = renderedItem // do not vertically stack the empty page w/ the renderedItem
+		} else {
+			added = lipgloss.JoinVertical(lipgloss.Left,
+				newPage,
+				renderedItem,
+			)
+		}
+		if lipgloss.Height(added) <= availableHeight {
+			newPage = added
+		} else {
+			pages = append(pages, newPage)
+			newPage = renderedItem
+		}
+	}
+	if len(pages) == 0 || len(newPage) != 0 {
+		pages = append(pages, newPage)
+	}
+
+	renderedList := pages[t.selection/availableHeight]
+
+	gap := availableHeight - lipgloss.Height(renderedList)
+	for i := 0; i < gap; i++ {
+		renderedList += "\n"
+	}
+
+	return lipgloss.NewStyle().MaxHeight(availableHeight).Render(
+		renderedList,
+	)
+}
+
+func (t tui) renderedItemCollection() []string {
+	// [ ]: `selected` style does not apply past the first tag
+	selected := lipgloss.NewStyle().Bold(true)
+
+	renderedItems := []string{}
+
+	for i, item := range t.renderSelection {
+		renderedItem := ""
+		if i == int(t.selection) {
+			renderedItem += "> "
+			renderedItem += selected.Render(t.renderTuido(*item))
+		} else {
+			renderedItem += "  "
+			renderedItem += t.renderTuido(*item)
+		}
+		renderedItems = append(renderedItems, renderedItem)
+	}
+	return renderedItems
 }
 
 // renderTuido applies tagColor to the items tags and returns the text

@@ -32,7 +32,7 @@ tuido
 
 ## Roadmap
 
-- [ ] paginate / restrict item list to respect current terminal height #bug #ui
+- [@] paginate / restrict item list to respect current terminal height #bug #ui
 - [ ] process due #dates
   - [ ] from items themselves, according to [x]it spec
   - [ ] (for creation #date) from the names of an item's source file

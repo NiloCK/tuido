@@ -68,17 +68,33 @@ func (t tui) footer() string {
 	item := t.currentSelection()
 	fStr := footStyle.Render(fmt.Sprintf("%s:%d", item.File(), item.Line()))
 
-	pagination := ""
-	if t.pages > 1 {
-		// [ ] if t.pages < ~6 or 7, then a dots display is nicer? #maybe
-		pagination = fmt.Sprintf("%d of %d", t.currentPage+1, t.pages)
-	}
-	pagination = footStyle.Copy().Faint(true).Render(pagination)
+	pagination := footStyle.Render(t.pagination())
 
 	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, fStr, pagination))-5)
 	gap := footStyle.Render(strings.Repeat(" ", spacerWidth))
 
 	return lg.JoinHorizontal(lg.Bottom, fStr, gap, pagination)
+}
+
+func (t tui) pagination() string {
+	ret := ""
+	bold := lg.NewStyle().Bold(true).SetString("●")
+	faint := lg.NewStyle().Faint(true).SetString("●")
+
+	if t.pages > 1 {
+		if t.pages < 8 {
+			for i := 0; i < t.pages; i++ {
+				if i == t.currentPage {
+					ret += bold.String()
+				} else {
+					ret += faint.String()
+				}
+			}
+		} else {
+			ret = faint.Render(fmt.Sprintf("%d of %d", t.currentPage+1, t.pages))
+		}
+	}
+	return ret
 }
 
 func (t tui) View() string {

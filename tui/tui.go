@@ -170,6 +170,16 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if t.selection+1 < len(t.renderSelection) {
 				t.selection++
 			}
+		case "pgdown":
+			t.selection = min(
+				t.selection+(len(t.renderSelection)/(t.h-6)),
+				len(t.renderSelection)-1,
+			)
+		case "pgup":
+			t.selection = max(
+				0,
+				t.selection-(len(t.renderSelection)/(t.h-6)),
+			)
 		case "tab":
 			t.tab()
 		case "x":

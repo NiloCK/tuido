@@ -43,10 +43,11 @@ tuido
 - [ ] #feat parse valued tags. EG, `#age=37` is parsed as a tag titled `age=37` rather than tag `age` with value `37`.
 - [ ] #feat contain the all-important [__z__: snooze] operation to bump an item's due date
 - [ ] #feat read a config file from `~/.tuido/config`, write by default to `~/.tuido/yyyy-mm-dd.xit`
-- [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui
+- [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui #maybe
 - [ ] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
 - [ ] #feat #maybe allow for creating new todos or editing the body text of existing ones
 - [ ] #feat #maybe fully respect / implement the [x]it spec
+- [ ] #feat read #config from any encountered `.tuido` file, and apply to child directories
 
 ## Development
 

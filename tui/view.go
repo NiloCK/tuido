@@ -68,13 +68,16 @@ func (t tui) footer() string {
 	item := t.currentSelection()
 	fStr := footStyle.Render(fmt.Sprintf("%s:%d", item.File(), item.Line()))
 
-	// [ ] the [enter] key here is not actually bound to anything
-	openPrompt := footStyle.Copy().Faint(true).Render("[enter] - inspect item")
-	gap := footStyle.Render(strings.Repeat(" ", max(0, t.w-lipgloss.Width(
-		lipgloss.JoinHorizontal(lipgloss.Bottom, fStr, openPrompt))-5,
-	)))
+	pagination := ""
+	if t.pages > 1 {
+		pagination = fmt.Sprintf("%d of %d", t.currentPage+1, t.pages)
+	}
+	pagination = footStyle.Copy().Faint(true).Render(pagination)
 
-	return lipgloss.JoinHorizontal(lipgloss.Bottom, fStr, gap, openPrompt)
+	spacerWidth := max(0, t.w-lipgloss.Width(lipgloss.JoinHorizontal(lipgloss.Bottom, fStr, pagination))-5)
+	gap := footStyle.Render(strings.Repeat(" ", spacerWidth))
+
+	return lipgloss.JoinHorizontal(lipgloss.Bottom, fStr, gap, pagination)
 }
 
 func (t tui) View() string {
@@ -105,12 +108,13 @@ func (t tui) View() string {
 
 		body := t.renderVisibleListedItems(availableHeight)
 
-		rows = append(rows, header, body, footer)
+		// recalculate footer because pages data was set during body render
+		rows = append(rows, header, body, t.footer())
 		return lipgloss.JoinVertical(lipgloss.Left, rows...)
 	}
 }
 
-func (t tui) renderVisibleListedItems(availableHeight int) string {
+func (t *tui) renderVisibleListedItems(availableHeight int) string {
 	// [ ] needs rendering (somewhere - footer? tab?) of page #
 	renderedItems := t.renderedItemCollection()
 
@@ -138,7 +142,10 @@ func (t tui) renderVisibleListedItems(availableHeight int) string {
 		pages = append(pages, newPage)
 	}
 
-	renderedList := pages[t.selection/availableHeight]
+	t.pages = len(pages)
+	t.currentPage = t.selection / availableHeight
+
+	renderedList := pages[t.currentPage]
 
 	gap := availableHeight - lipgloss.Height(renderedList)
 	for i := 0; i < gap; i++ {

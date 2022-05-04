@@ -116,10 +116,13 @@ const (
 )
 
 type tui struct {
-	items           []*tuido.Item
+	items       []*tuido.Item
+	itemsFilter itemType
+
 	renderSelection []*tuido.Item
-	itemsFilter     itemType
 	selection       int
+	pages           int
+	currentPage     int
 
 	mode mode
 

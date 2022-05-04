@@ -223,6 +223,7 @@ func (t *tui) tab() {
 func (t *tui) currentSelection() *tuido.Item {
 	if len(t.renderSelection) == 0 {
 		t.populateRenderSelection()
+		return nil
 	}
 	t.setSelection(t.selection)
 	return t.renderSelection[t.selection]

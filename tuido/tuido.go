@@ -68,6 +68,14 @@ type Item struct {
 	tags []string
 }
 
+func (i *Item) Location() string {
+	if i == nil {
+		return ""
+	}
+
+	return fmt.Sprintf("%s:%d", i.file, i.line)
+}
+
 // Status returns the status of the item. One of:
 //  - open (ie, noted but not begun)
 //  - ongoing (ie, in progress)
@@ -82,6 +90,10 @@ func (i Item) Satus() status {
 //
 // If the disk write fails, the in-memory update is abandoned.
 func (i *Item) SetStatus(s status) error {
+	if i == nil {
+		return fmt.Errorf("item is nil - cannot update status")
+	}
+
 	newRaw := i.scrap() + s.toString() + i.Text()
 
 	err := fileInsert(i.file, i.line, i.raw, newRaw)
@@ -193,10 +205,6 @@ func trim(raw string) string {
 
 	return trimmed
 }
-
-func (i Item) Line() int { return i.line }
-
-func (i Item) File() string { return i.file }
 
 func (i Item) trimmed() string {
 	return trim(i.raw)

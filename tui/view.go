@@ -65,15 +65,15 @@ func (t tui) header() string {
 func (t tui) footer() string {
 	footStyle := tabStyle.Copy().BorderBottom(false).BorderLeft(false).BorderRight(false)
 
-	item := t.currentSelection()
-	fStr := footStyle.Render(fmt.Sprintf("%s:%d", item.File(), item.Line()))
+	itemLoc := t.currentSelection().Location()
+	itemStr := footStyle.Render(itemLoc)
 
 	pagination := footStyle.Render(t.pagination())
 
-	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, fStr, pagination))-5)
+	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, itemStr, pagination))-5)
 	gap := footStyle.Render(strings.Repeat(" ", spacerWidth))
 
-	return lg.JoinHorizontal(lg.Bottom, fStr, gap, pagination)
+	return lg.JoinHorizontal(lg.Bottom, itemStr, gap, pagination)
 }
 
 func (t tui) pagination() string {

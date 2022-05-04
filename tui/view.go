@@ -182,7 +182,7 @@ func (t tui) renderedItemCollection() []string {
 
 	for i, item := range t.renderSelection {
 		renderedItem := ""
-		if i == int(t.selection) {
+		if i == t.selection {
 			renderedItem += "> "
 			renderedItem += selected.Render(t.renderTuido(*item))
 		} else {

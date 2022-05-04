@@ -136,6 +136,13 @@ type tui struct {
 	w int
 }
 
+func (t *tui) setSelection(s int) {
+	s = min(s, len(t.renderSelection)-1)
+	s = max(s, 0)
+
+	t.selection = s
+}
+
 func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if t.mode == help {
 		if _, ok := msg.(tea.KeyMsg); ok {
@@ -163,23 +170,13 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch msg.String() {
 		case "up":
-			if t.selection > 0 {
-				t.selection--
-			}
+			t.setSelection(t.selection - 1)
 		case "down":
-			if t.selection+1 < len(t.renderSelection) {
-				t.selection++
-			}
+			t.setSelection(t.selection + 1)
 		case "pgdown": // [ ] these paging functions are not "accurate" #ui #polish
-			t.selection = min(
-				t.selection+(len(t.renderSelection)/(t.h-6)),
-				len(t.renderSelection)-1,
-			)
+			t.setSelection(t.selection + (len(t.renderSelection) / (t.h - 6)))
 		case "pgup":
-			t.selection = max(
-				0,
-				t.selection-(len(t.renderSelection)/(t.h-6)),
-			)
+			t.setSelection(t.selection - (len(t.renderSelection) / (t.h - 6)))
 		case "tab":
 			t.tab()
 		case "x":
@@ -227,6 +224,7 @@ func (t *tui) currentSelection() *tuido.Item {
 	if len(t.renderSelection) == 0 {
 		t.populateRenderSelection()
 	}
+	t.setSelection(t.selection)
 	return t.renderSelection[t.selection]
 }
 
@@ -274,9 +272,8 @@ func (t *tui) populateRenderSelection() {
 		t.renderSelection = filtered
 	}
 
-	if t.selection+1 >= len(t.renderSelection) {
-		t.selection = len(t.renderSelection) - 1
-	}
+	// ensure the previous selection value is still in range
+	t.setSelection(t.selection)
 }
 
 func (t tui) Init() tea.Cmd { return textinput.Blink }

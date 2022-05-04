@@ -12,7 +12,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
+	lg "github.com/charmbracelet/lipgloss"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/nilock/tuido/tuido"
 )
@@ -85,21 +85,21 @@ func newTUI(items []*tuido.Item) tui {
 
 // populateTagColorStyles returns a coloring style for
 // each #tag that exists in the list of items.
-func populateTagColorStyles(items []*tuido.Item) map[string]lipgloss.Style {
+func populateTagColorStyles(items []*tuido.Item) map[string]lg.Style {
 	var tags []string
 	for _, item := range items {
 		tags = append(tags, item.Tags()...)
 	}
 
-	tagColors := map[string]lipgloss.Style{}
+	tagColors := map[string]lg.Style{}
 	interval := 360.0 / float64(len(tags))
 	offset := rand.Float64() * 360
 
 	for i, tag := range tags {
 		hue := int(offset+float64(i)*interval) % 360
-		tagColors[tag] = lipgloss.NewStyle().
+		tagColors[tag] = lg.NewStyle().
 			Foreground(
-				lipgloss.Color(
+				lg.Color(
 					colorful.Hcl(float64(hue), .9, 0.85).Clamped().Hex(),
 				),
 			)
@@ -128,7 +128,7 @@ type tui struct {
 
 	filter textinput.Model
 
-	tagColors map[string]lipgloss.Style
+	tagColors map[string]lg.Style
 
 	// height of the window
 	h int

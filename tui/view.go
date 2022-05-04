@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	lg "github.com/charmbracelet/lipgloss"
 	"github.com/nilock/tuido/tuido"
 )
 
 var ( // header styles
-	activeTabBorder = lipgloss.Border{
+	activeTabBorder = lg.Border{
 		Top:         "─",
 		Bottom:      " ",
 		Left:        "│",
@@ -20,7 +20,7 @@ var ( // header styles
 		BottomRight: "└",
 	}
 
-	tabBorder = lipgloss.Border{
+	tabBorder = lg.Border{
 		Top:         "─",
 		Bottom:      "─",
 		Left:        "│",
@@ -31,10 +31,10 @@ var ( // header styles
 		BottomRight: "┴",
 	}
 
-	tabStyle       lipgloss.Style = lipgloss.NewStyle().Border(tabBorder).Padding(0, 2)
-	activeTabStyle lipgloss.Style = tabStyle.Copy().Bold(true).Border(activeTabBorder, true)
+	tabStyle       lg.Style = lg.NewStyle().Border(tabBorder).Padding(0, 2)
+	activeTabStyle lg.Style = tabStyle.Copy().Bold(true).Border(activeTabBorder, true)
 
-	tabGapStyle lipgloss.Style = tabStyle.Copy().BorderTop(false).BorderLeft(false).BorderRight(false)
+	tabGapStyle lg.Style = tabStyle.Copy().BorderTop(false).BorderLeft(false).BorderRight(false)
 )
 
 func (t tui) header() string {
@@ -52,14 +52,14 @@ func (t tui) header() string {
 		doneTab = tabStyle.Render(string(done))
 	}
 
-	tabs := lipgloss.JoinHorizontal(lipgloss.Bottom, todoTab, doneTab)
+	tabs := lg.JoinHorizontal(lg.Bottom, todoTab, doneTab)
 	searchBox := tabGapStyle.Render(t.filter.View())
 	helpPrompt := tabGapStyle.Copy().Faint(true).Render("? - help")
-	gap := tabGapStyle.Render(strings.Repeat(" ", max(0, t.w-lipgloss.Width(
-		lipgloss.JoinHorizontal(lipgloss.Bottom, tabs, searchBox, helpPrompt))-5),
+	gap := tabGapStyle.Render(strings.Repeat(" ", max(0, t.w-lg.Width(
+		lg.JoinHorizontal(lg.Bottom, tabs, searchBox, helpPrompt))-5),
 	))
 
-	return lipgloss.JoinHorizontal(lipgloss.Bottom, tabs, searchBox, gap, helpPrompt)
+	return lg.JoinHorizontal(lg.Bottom, tabs, searchBox, gap, helpPrompt)
 }
 
 func (t tui) footer() string {
@@ -70,14 +70,15 @@ func (t tui) footer() string {
 
 	pagination := ""
 	if t.pages > 1 {
+		// [ ] if t.pages < ~6 or 7, then a dots display is nicer? #maybe
 		pagination = fmt.Sprintf("%d of %d", t.currentPage+1, t.pages)
 	}
 	pagination = footStyle.Copy().Faint(true).Render(pagination)
 
-	spacerWidth := max(0, t.w-lipgloss.Width(lipgloss.JoinHorizontal(lipgloss.Bottom, fStr, pagination))-5)
+	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, fStr, pagination))-5)
 	gap := footStyle.Render(strings.Repeat(" ", spacerWidth))
 
-	return lipgloss.JoinHorizontal(lipgloss.Bottom, fStr, gap, pagination)
+	return lg.JoinHorizontal(lg.Bottom, fStr, gap, pagination)
 }
 
 func (t tui) View() string {
@@ -91,9 +92,9 @@ func (t tui) View() string {
 		ret += "[tab]:cycle between todo and done tabs\n/: filter todos by tag\n?: enter help\n\n"
 		ret += "q: quit"
 
-		txt := lipgloss.NewStyle().Width(28).Align(lipgloss.Left).
+		txt := lg.NewStyle().Width(28).Align(lg.Left).
 			Render("\ntuido reads txt, md, and xit files from the working directory and locates xit style todo items, allowing for quick navigation and discovery.\n\nUpdating an item's status in tuido writes the corresponding change to disk.")
-		return lipgloss.JoinHorizontal(lipgloss.Top, "  ", ret, "   ", txt)
+		return lg.JoinHorizontal(lg.Top, "  ", ret, "   ", txt)
 	default:
 		if len(t.renderSelection) == 0 { // init population
 			t.populateRenderSelection()
@@ -104,13 +105,13 @@ func (t tui) View() string {
 
 		rows := []string{}
 
-		availableHeight := t.h - (lipgloss.Height(header) + lipgloss.Height(footer))
+		availableHeight := t.h - (lg.Height(header) + lg.Height(footer))
 
 		body := t.renderVisibleListedItems(availableHeight)
 
 		// recalculate footer because pages data was set during body render
 		rows = append(rows, header, body, t.footer())
-		return lipgloss.JoinVertical(lipgloss.Left, rows...)
+		return lg.JoinVertical(lg.Left, rows...)
 	}
 }
 
@@ -126,12 +127,12 @@ func (t *tui) renderVisibleListedItems(availableHeight int) string {
 		if newPage == "" {
 			added = renderedItem // do not vertically stack the empty page w/ the renderedItem
 		} else {
-			added = lipgloss.JoinVertical(lipgloss.Left,
+			added = lg.JoinVertical(lg.Left,
 				newPage,
 				renderedItem,
 			)
 		}
-		if lipgloss.Height(added) <= availableHeight {
+		if lg.Height(added) <= availableHeight {
 			newPage = added
 		} else {
 			pages = append(pages, newPage)
@@ -147,19 +148,19 @@ func (t *tui) renderVisibleListedItems(availableHeight int) string {
 
 	renderedList := pages[t.currentPage]
 
-	gap := availableHeight - lipgloss.Height(renderedList)
+	gap := availableHeight - lg.Height(renderedList)
 	for i := 0; i < gap; i++ {
 		renderedList += "\n"
 	}
 
-	return lipgloss.NewStyle().MaxHeight(availableHeight).Render(
+	return lg.NewStyle().MaxHeight(availableHeight).Render(
 		renderedList,
 	)
 }
 
 func (t tui) renderedItemCollection() []string {
 	// [ ]: `selected` style does not apply past the first tag
-	selected := lipgloss.NewStyle().Bold(true)
+	selected := lg.NewStyle().Bold(true)
 
 	renderedItems := []string{}
 

@@ -170,7 +170,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if t.selection+1 < len(t.renderSelection) {
 				t.selection++
 			}
-		case "pgdown":
+		case "pgdown": // [ ] these paging functions are not "accurate" #ui #polish
 			t.selection = min(
 				t.selection+(len(t.renderSelection)/(t.h-6)),
 				len(t.renderSelection)-1,

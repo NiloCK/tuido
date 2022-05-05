@@ -2,10 +2,10 @@ package tui
 
 import (
 	"bufio"
+	"fmt"
 	"io/fs"
 	"math/rand"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -26,12 +26,6 @@ func Run() {
 		"xit",
 	}
 	// todo: flag for added extensions / extension specificity
-
-	// special case for development:
-	// parse .go files when the current directory is the project itself
-	if path.Base(wdStr) == "tuido" {
-		extensions = append(extensions, "go")
-	}
 
 	if err != nil {
 		panic(err)
@@ -305,6 +299,16 @@ func getItems(file string) []*tuido.Item {
 func getFiles(wd string, extensions []string) []string {
 	files := []string{}
 	filepath.WalkDir(wd, func(path string, d fs.DirEntry, err error) error {
+
+		if d.IsDir() { // apply .tuido config if it exists
+
+			configPath := filepath.Join(path, ".tuido")
+
+			if config, err := os.Open(configPath); err == nil {
+				extensions = append(extensions, parseConfig(config)...)
+			}
+		}
+
 		for _, suffix := range extensions {
 
 			if strings.HasSuffix(
@@ -318,4 +322,20 @@ func getFiles(wd string, extensions []string) []string {
 		return nil
 	})
 	return files
+}
+
+func parseConfig(cfg *os.File) (extensions []string) {
+	buf := make([]byte, 1024)
+
+	if n, err := cfg.Read(buf); err == nil {
+		cStr := string(buf[:n])
+		fmt.Println(buf)
+		split := strings.Split(cStr, "=")
+
+		if split[0] == "extensions" {
+			return strings.Split(split[1], ",")
+		}
+	}
+
+	return nil
 }

@@ -17,6 +17,14 @@ From some directory containing `[x]it!` files / items:
 tuido
 ```
 
+## Configuration
+
+Include a `.tuido` file in a directory to add specific filetypes for parsing:
+
+```
+extensions=go,js,cpp
+```
+
 ### In app controls
 
 - **?**: help
@@ -42,12 +50,11 @@ tuido
 - [ ] #feat specify / parse a format for recurring items (call mom, eat a salad)
 - [ ] #feat parse valued tags. EG, `#age=37` is parsed as a tag titled `age=37` rather than tag `age` with value `37`.
 - [ ] #feat contain the all-important [__z__: snooze] operation to bump an item's due date
-- [ ] #feat read a config file from `~/.tuido/config`, write by default to `~/.tuido/yyyy-mm-dd.xit`
+- [@] #feat read a #config file from `~/.tuido/config`, write by default to `~/.tuido/yyyy-mm-dd.xit`
 - [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui #maybe
 - [ ] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
-- [ ] #feat #maybe allow for creating new todos or editing the body text of existing ones
+- [@] #feat #maybe allow for creating new todos or editing the body text of existing ones
 - [ ] #feat #maybe fully respect / implement the [x]it spec
-- [ ] #feat read #config from any encountered `.tuido` file, and apply to child directories
 
 ## Development
 
@@ -56,7 +63,7 @@ tuido
 2. clone repo
 3. `go run .`
 
-tuido is dogfooding. As a special case, when the working directory is equal to `tuido` (as it is during `go run .` from the project root), tuido parses items in `.go` files as well as the defaults. Result being that the app, runnng in test, contains a good running list of development todos.
+tuido is dogfooding. The project's `.tuido` file instructs tuido to parse items in from `.go` files as well as the defaults. Result being that the app, runnng in test, contains a good running list of development todos.
 
 ## Licence
 

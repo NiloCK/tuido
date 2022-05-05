@@ -172,7 +172,7 @@ func (i Item) Tags() []string {
 //
 // [ ] unit #test this w/ a bunch of expected passes & failures
 // [ ] #maybe allow numbered md lists (1. [ ] ...)
-// [ ] #maybe include a language map for code-comment parsing. ie, {".rb": "#", ".go": "//"}
+// [@] #maybe include a language map for code-comment parsing. ie, {".rb": "#", ".go": "//"}
 // [ ] #maybe require a file extension for this fcn. Allows for PL specific rules, as well as md
 func IsTuido(raw string) bool {
 	trimmed := trim(raw)

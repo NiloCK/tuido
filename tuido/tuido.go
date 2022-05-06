@@ -20,7 +20,7 @@ const (
 
 var statuses []status = []status{Open, Ongoing, Checked, Obsolete}
 
-func (s status) toString() string {
+func (s status) String() string {
 	switch s {
 
 	case Open:
@@ -28,7 +28,7 @@ func (s status) toString() string {
 	case Ongoing:
 		return "[@]"
 	case Checked:
-		return "[x]"
+		return "[x]" // [✔] [✓] ?
 	case Obsolete:
 		return "[~]"
 	case unknown:
@@ -94,13 +94,31 @@ func (i *Item) SetStatus(s status) error {
 		return fmt.Errorf("item is nil - cannot update status")
 	}
 
-	newRaw := i.scrap() + s.toString() + i.Text()
+	newRaw := i.scrap() + s.String() + i.Text()
 
 	err := fileInsert(i.file, i.line, i.raw, newRaw)
 	if err != nil {
 		return err
 	}
 
+	i.raw = newRaw
+	return nil
+}
+
+// SetText writes the updated text to the item's file
+// on disk and updates the text of the in-memory item.
+//
+// If the disk write fails, the in-memory update is abandoned.
+func (i *Item) SetText(t string) error {
+	if i == nil {
+		return fmt.Errorf("item is nil - cannot update text")
+	}
+
+	newRaw := i.scrap() + i.Satus().String() + t
+	err := fileInsert(i.file, i.line, i.raw, newRaw)
+	if err != nil {
+		return err
+	}
 	i.raw = newRaw
 	return nil
 }
@@ -178,7 +196,7 @@ func IsTuido(raw string) bool {
 	trimmed := trim(raw)
 
 	for _, status := range statuses {
-		if strings.HasPrefix(trimmed, status.toString()) {
+		if strings.HasPrefix(trimmed, status.String()) {
 			return true
 		}
 	}

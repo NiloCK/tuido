@@ -64,6 +64,9 @@ func newTUI(items []*tuido.Item) tui {
 	filter := textinput.New()
 	filter.Placeholder = "filter by #tag. press /"
 
+	itemEditor := textinput.New()
+	itemEditor.Prompt = ">>>"
+
 	return tui{
 		items:           items,
 		renderSelection: nil,
@@ -71,6 +74,7 @@ func newTUI(items []*tuido.Item) tui {
 		mode:            navigation,
 		selection:       0,
 		filter:          filter,
+		itemEditor:      itemEditor,
 		tagColors:       populateTagColorStyles(items),
 		h:               0,
 		w:               0,
@@ -106,6 +110,7 @@ type mode int
 const (
 	navigation mode = iota
 	filter
+	edit
 	help
 )
 
@@ -120,7 +125,8 @@ type tui struct {
 
 	mode mode
 
-	filter textinput.Model
+	filter     textinput.Model
+	itemEditor textinput.Model
 
 	tagColors map[string]lg.Style
 
@@ -145,10 +151,29 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if t.mode == edit {
+		if msg, ok := msg.(tea.KeyMsg); ok {
+			key := msg.String()
+			if key == "esc" {
+				t.mode = navigation // abandon changes
+			}
+			if key == "enter" {
+				if txt := t.itemEditor.Value(); txt != "" {
+					t.currentSelection().SetText(txt)
+					t.mode = navigation
+				}
+			}
+		}
+
+		var cmd tea.Cmd
+		t.itemEditor, cmd = t.itemEditor.Update(msg)
+		return t, cmd
+	}
+
 	t.populateRenderSelection()
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if t.filter.Focused() {
+		if t.filter.Focused() { // [ ] replace this w/ the mode-switch as with edit
 			k := msg.String()
 			if k == "esc" ||
 				k == "tab" ||
@@ -189,6 +214,11 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.currentSelection().SetStatus(tuido.Open)
 		case "/":
 			t.filter.Focus()
+		case "e":
+			t.mode = edit
+			t.itemEditor.SetValue(t.currentSelection().Text())
+			t.itemEditor.CursorEnd()
+			t.itemEditor.Focus()
 		case "?":
 			t.mode = help
 		case "q":

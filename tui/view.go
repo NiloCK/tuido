@@ -68,12 +68,18 @@ func (t tui) footer() string {
 	itemLoc := t.currentSelection().Location()
 	itemStr := footStyle.Render(itemLoc)
 
-	pagination := footStyle.Render(t.pagination())
+	var right string
+	if t.mode == navigation {
+		right = footStyle.Render(t.pagination())
+	} else if t.mode == edit {
+		right = footStyle.Copy().Faint(true).
+			Render("[enter] - Save Changes,  [esc] - Discard Changes")
+	}
 
-	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, itemStr, pagination))-5)
+	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, itemStr, right))-5)
 	gap := footStyle.Render(strings.Repeat(" ", spacerWidth))
 
-	return lg.JoinHorizontal(lg.Bottom, itemStr, gap, pagination)
+	return lg.JoinHorizontal(lg.Bottom, itemStr, gap, right)
 }
 
 func (t tui) pagination() string {
@@ -104,8 +110,8 @@ func (t tui) View() string {
 	switch t.mode {
 	case help:
 		ret := "\n[press any key to exit help]\n\n"
-		ret += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
-		ret += "[tab]:cycle between todo and done tabs\n/: filter todos by tag\n?: enter help\n\n"
+		ret += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\ne: edit\n\n"
+		ret += "[tab]: cycle between todo and done tabs\n/: filter todos by tag\n?: enter help\n\n"
 		ret += "q: quit"
 
 		txt := lg.NewStyle().Width(28).Align(lg.Left).
@@ -184,7 +190,12 @@ func (t tui) renderedItemCollection() []string {
 		renderedItem := ""
 		if i == t.selection {
 			renderedItem += "> "
-			renderedItem += selected.Render(t.renderTuido(*item))
+			if t.mode == edit {
+				renderedItem += selected.Render(t.itemEditor.View())
+			} else {
+				renderedItem += selected.Render(t.renderTuido(*item))
+			}
+
 		} else {
 			renderedItem += "  "
 			renderedItem += t.renderTuido(*item)

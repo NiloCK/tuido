@@ -39,6 +39,19 @@ extensions=go,js,cpp
 - **[up]**, **[down]**: navigate items
 - **q**: quit
 
+## Development
+
+0. install go (see https://go.dev)
+1. (suggested) read the in-readme tutorial for https://github.com/charmbracelet/bubbletea
+2. clone repo
+3. `go run .`
+
+tuido is dogfooding. The project's `.tuido` file instructs tuido to parse items in from `.go` files as well as the defaults. Result being that the app, runnng in test, contains a good running list of development todos.
+
+## Licence
+
+GPL
+
 ## Roadmap
 
 - [@] #feat allow for creating new todos
@@ -56,16 +69,3 @@ extensions=go,js,cpp
 - [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui #maybe
 - [ ] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
 - [ ] #feat #maybe fully respect / implement the [x]it spec
-
-## Development
-
-0. install go (see https://go.dev)
-1. (suggested) read the in-readme tutorial for https://github.com/charmbracelet/bubbletea
-2. clone repo
-3. `go run .`
-
-tuido is dogfooding. The project's `.tuido` file instructs tuido to parse items in from `.go` files as well as the defaults. Result being that the app, runnng in test, contains a good running list of development todos.
-
-## Licence
-
-GPL

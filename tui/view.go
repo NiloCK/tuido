@@ -110,7 +110,8 @@ func (t tui) View() string {
 	switch t.mode {
 	case help:
 		ret := "\n[press any key to exit help]\n\n"
-		ret += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\ne: edit\n\n"
+		ret += "n: new item\ne: edit item\n\n"
+		ret += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
 		ret += "[tab]: cycle between todo and done tabs\n/: filter todos by tag\n?: enter help\n\n"
 		ret += "q: quit"
 

@@ -4,7 +4,7 @@ A terminal interface for efficient browsing and management of [[x]it!](https://g
 
 - [x] searches the working directory recursively for [x]it! compatible items in `.xit`, `.md`, and `.txt` files
 - [x] compactly displays pending todos and offers navigation between `todo` and `done`
-- [x] allows for updating todo status and body text, and persists the updates to the original files
+- [x] allows for creating new items, updating existing items, and persists updates to disk
 - [x] allows for filtering via `tags`
 
 ![tuidi preview](./preview.gif)
@@ -19,10 +19,11 @@ tuido
 
 ## Configuration
 
-Include a `.tuido` file in a directory to add specific filetypes for parsing:
+Include a `.tuido` file in a directory to add specific filetypes for parsing, or a specific destination for new items to be written to:
 
 ```
 extensions=go,js,cpp
+writeto=~/mytodos.xit
 ```
 
 ### In app controls
@@ -46,7 +47,12 @@ extensions=go,js,cpp
 2. clone repo
 3. `go run .`
 
-tuido is dogfooding. The project's `.tuido` file instructs tuido to parse items in from `.go` files as well as the defaults. Result being that the app, runnng in test, contains a good running list of development todos.
+tuido is dogfooding. The project's `.tuido` file:
+
+- instructs tuido to parse items in from `.go` files as well as the defaults.
+- instructs tuido to write new items to this readme
+
+Result being that the app, runnng in test, contains a good running list of development todos & a convenient method to append to the roadmap.
 
 ## Licence
 
@@ -54,8 +60,8 @@ GPL
 
 ## Roadmap
 
-- [@] #feat allow for creating new todos
-- [@] #feat read a #config file from `~/.tuido/config`, write by default to `~/.tuido/yyyy-mm-dd.xit`
+- [@] #feat read a #config file from `~/.tuido/.config`, write by default to `~/.tuido/yyyy-mm-dd.xit`
+- [@] #feat make new-items repsect the filetype being written to (leading comment slashes for code files, leading bullet for readme, etc)
 - [ ] process due #dates
   - [ ] from items themselves, according to [x]it spec
   - [ ] (for creation #date) from the names of an item's source file

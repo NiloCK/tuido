@@ -237,6 +237,31 @@ func New(
 	line int,
 	raw string,
 ) Item {
+	// [ ] replace this magic # w/ better named ctors
+	if line < 0 { // this is a new item authored in-tui
+		newItemRaw := "[ ] "
+		// append new blank todo to `file`
+		f, err := os.OpenFile(file, os.O_APPEND|os.O_RDWR|os.O_CREATE, os.ModeAppend)
+		if err != nil {
+			return Item{}
+		}
+		defer f.Close()
+		f.WriteString(newItemRaw)
+
+		// get the line # of the new item
+		f.Seek(0, 0) // reset to beginning of f
+		scanner := bufio.NewScanner(f)
+		newItemLine := 0
+		for scanner.Scan() {
+			newItemLine++
+		}
+
+		return Item{
+			file: file,
+			line: newItemLine,
+			raw:  newItemRaw,
+		}
+	}
 	return Item{
 		file: file,
 		line: line,

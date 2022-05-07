@@ -2,6 +2,7 @@ package tui
 
 import (
 	"bufio"
+	"fmt"
 	"io/fs"
 	"math/rand"
 	"os"
@@ -34,7 +35,7 @@ func Run() {
 		items = append(items, getItems(f)...)
 	}
 
-	prog := tea.NewProgram(newTUI(items), tea.WithAltScreen())
+	prog := tea.NewProgram(newTUI(items, runConfig), tea.WithAltScreen())
 
 	if err := prog.Start(); err != nil {
 		panic(err)
@@ -52,7 +53,7 @@ func init() {
 	rand.Seed(time.Now().Unix()) // a fresh set of tag colors on each run. Spice of life.
 }
 
-func newTUI(items []*tuido.Item) tui {
+func newTUI(items []*tuido.Item, cfg config) tui {
 	// the search bar:
 	filter := textinput.New()
 	filter.Placeholder = "filter by #tag. press /"
@@ -61,6 +62,7 @@ func newTUI(items []*tuido.Item) tui {
 	itemEditor.Prompt = ">>>"
 
 	return tui{
+		config:          cfg,
 		items:           items,
 		renderSelection: nil,
 		itemsFilter:     todo,
@@ -154,7 +156,10 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			if key == "enter" {
 				if txt := t.itemEditor.Value(); txt != "" {
-					t.currentSelection().SetText(txt)
+					err := t.currentSelection().SetText(txt)
+					if err != nil {
+						fmt.Println("error: ", err)
+					}
 					t.mode = navigation
 				}
 			}
@@ -168,7 +173,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	t.populateRenderSelection()
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		if t.filter.Focused() { // [ ] replace this w/ the mode-switch as with edit
+		if t.filter.Focused() { // [x] replace this w/ the mode-switch as with edit
 			k := msg.String()
 			if k == "esc" ||
 				k == "tab" ||
@@ -210,10 +215,14 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "/":
 			t.filter.Focus()
 		case "e":
-			t.mode = edit
-			t.itemEditor.SetValue(t.currentSelection().Text())
-			t.itemEditor.CursorEnd()
-			t.itemEditor.Focus()
+			return t, t.setEditMode()
+		case "n":
+			newItem := tuido.New(t.config.writeto, -1, "")
+			t.items = append([]*tuido.Item{&newItem}, t.items...)
+			t.populateRenderSelection()
+			t.setSelection(0)
+			t.setEditMode()
+			return t, t.setEditMode()
 		case "?":
 			t.mode = help
 		case "q":
@@ -225,6 +234,14 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		t.w = msg.Width
 	}
 	return t, nil
+}
+
+func (t *tui) setEditMode() tea.Cmd {
+	t.mode = edit
+	t.itemEditor.SetValue(t.currentSelection().Text())
+	t.itemEditor.CursorEnd()
+	t.itemEditor.Focus()
+	return nil
 }
 
 // tab cycles the view between todos and dones.

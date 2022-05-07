@@ -1,1 +1,2 @@
-extensions=go,ts,js,xml
+extensions=go,md
+writeto=readme.md

@@ -2,7 +2,6 @@ package tui
 
 import (
 	"bufio"
-	"fmt"
 	"io/fs"
 	"math/rand"
 	"os"
@@ -20,18 +19,15 @@ import (
 func Run() {
 	wdStr, err := os.Getwd()
 
-	extensions := []string{
-		"md",
-		"txt",
-		"xit",
-	}
-	// todo: flag for added extensions / extension specificity
-
 	if err != nil {
 		panic(err)
 	}
 
-	files := getFiles(wdStr, extensions)
+	adoptConfigSettings("~/.tuido/.config")
+	adoptConfigSettings(filepath.Join(wdStr, ".tuido"))
+	// [ ] read cli flags for added extensions / extension specificity
+
+	files := getFiles(wdStr, runConfig.extensions)
 
 	items := []*tuido.Item{}
 	for _, f := range files {
@@ -53,9 +49,6 @@ const (
 )
 
 func init() {
-	// home := os.Getenv("HOME")
-	// tdpath := path.Join(home, ".tuido")
-
 	rand.Seed(time.Now().Unix()) // a fresh set of tag colors on each run. Spice of life.
 }
 
@@ -115,6 +108,8 @@ const (
 )
 
 type tui struct {
+	config config
+
 	items       []*tuido.Item
 	itemsFilter itemType
 
@@ -330,12 +325,13 @@ func getFiles(wd string, extensions []string) []string {
 	files := []string{}
 	filepath.WalkDir(wd, func(path string, d fs.DirEntry, err error) error {
 
-		if d.IsDir() { // apply .tuido config if it exists
-
-			configPath := filepath.Join(path, ".tuido")
-
-			if config, err := os.Open(configPath); err == nil {
-				extensions = append(extensions, parseConfig(config)...)
+		// apply .tuido configured extensions if they exist, but do not
+		// read a configured writeto. writeto is decided by the root
+		// working directory or user config
+		if d.IsDir() {
+			cfg := parseConfigIfExists(filepath.Join(path, ".tuido"))
+			if cfg != nil {
+				extensions = cfg.extensions
 			}
 		}
 
@@ -352,47 +348,4 @@ func getFiles(wd string, extensions []string) []string {
 		return nil
 	})
 	return files
-}
-
-type config struct {
-	// extensions is a collection of file extensions that will be parsed for items.
-	extensions []string
-	// writeto is the location that items created in-app will be appended to.
-	writeto string
-}
-
-// parseConfig reads a file for tuido configuration flags according
-// to the following. It:
-//  - reads from the first line of the file
-//  - pulls one config flag from each line
-//  - ends reading the file when it encounters a line with no config flags
-//
-// This allows the .tuido file to be used as both configuration and as an
-// append target for new items authored in-tui.
-func parseConfig(file *os.File) config {
-	cfg := config{}
-
-	scanner := bufio.NewScanner(file)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		split := strings.Split(line, "=")
-
-		if len(split) == 2 {
-
-			if split[0] == "extensions" {
-				cfg.extensions = strings.Split(split[1], ",")
-			}
-			if split[0] == "appendto" {
-				cfg.writeto = split[1]
-			}
-
-		} else {
-			// not a config line:
-			return cfg
-		}
-	}
-
-	return cfg
 }

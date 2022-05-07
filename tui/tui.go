@@ -354,18 +354,45 @@ func getFiles(wd string, extensions []string) []string {
 	return files
 }
 
-func parseConfig(cfg *os.File) (extensions []string) {
-	buf := make([]byte, 1024)
+type config struct {
+	// extensions is a collection of file extensions that will be parsed for items.
+	extensions []string
+	// writeto is the location that items created in-app will be appended to.
+	writeto string
+}
 
-	if n, err := cfg.Read(buf); err == nil {
-		cStr := string(buf[:n])
-		fmt.Println(buf)
-		split := strings.Split(cStr, "=")
+// parseConfig reads a file for tuido configuration flags according
+// to the following. It:
+//  - reads from the first line of the file
+//  - pulls one config flag from each line
+//  - ends reading the file when it encounters a line with no config flags
+//
+// This allows the .tuido file to be used as both configuration and as an
+// append target for new items authored in-tui.
+func parseConfig(file *os.File) config {
+	cfg := config{}
 
-		if split[0] == "extensions" {
-			return strings.Split(split[1], ",")
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		line := scanner.Text()
+
+		split := strings.Split(line, "=")
+
+		if len(split) == 2 {
+
+			if split[0] == "extensions" {
+				cfg.extensions = strings.Split(split[1], ",")
+			}
+			if split[0] == "appendto" {
+				cfg.writeto = split[1]
+			}
+
+		} else {
+			// not a config line:
+			return cfg
 		}
 	}
 
-	return nil
+	return cfg
 }

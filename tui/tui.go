@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -47,10 +46,6 @@ const (
 	todo itemType = "todo"
 	done itemType = "done"
 )
-
-func init() {
-	rand.Seed(time.Now().Unix()) // a fresh set of tag colors on each run. Spice of life.
-}
 
 func newTUI(items []*tuido.Item, cfg config) tui {
 	// the search bar:

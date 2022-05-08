@@ -8,15 +8,22 @@ import (
 )
 
 type config struct {
-	// extensions is a collection of file extensions that will be parsed for items.
+	// extensions is a collection of file extensions that will be parsed for items
+	//
+	// default value for extensions is ["xit", "md", "txt"].
 	extensions []string
+
 	// writeto is the location that items created in-app will be appended to.
+	//
+	// writeto can be either:
+	//  - a file, which will have new items appended as new lines, or
+	//  - a directory, which will be written with YYYY-MM-DD.xit files for each day
 	writeto string
 }
 
 var runConfig config = config{
 	extensions: []string{"xit", "md", "txt"},
-	writeto:    "~/.tuido/tuido.xit", // todo: YYYY-MM-DD.xit -> write to a new file given each day
+	writeto:    "~/.tuido",
 }
 
 func adoptConfigSettings(location string) {

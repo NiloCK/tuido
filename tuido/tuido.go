@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -240,8 +241,14 @@ func New(
 	// [ ] replace this magic # w/ better named ctors
 	if line < 0 { // this is a new item authored in-tui
 		newItemRaw := "[ ] "
+
 		// append new blank todo to `file`
-		f, err := os.OpenFile(file, os.O_APPEND|os.O_RDWR|os.O_CREATE, os.ModeAppend)
+		fInfo, _ := os.Stat(file)
+		if fInfo.IsDir() {
+			file = filepath.Join(file, time.Now().Format("2006-01-02")+".xit") // xit, md, tbd
+		}
+
+		f, err := os.OpenFile(file, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0777)
 		if err != nil {
 			return Item{}
 		}

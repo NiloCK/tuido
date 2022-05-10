@@ -22,14 +22,15 @@ func Run() {
 		panic(err)
 	}
 
-	adoptConfigSettings("~/.tuido/.config")
 	adoptConfigSettings(filepath.Join(wdStr, ".tuido"))
 	// [ ] read cli flags for added extensions / extension specificity
 
-	wdFiles := getFiles(wdStr, runConfig.extensions)
-	cfgFiles := getFiles(runConfig.writeto, runConfig.extensions)
+	files := getFiles(runConfig.writeto, runConfig.extensions)
 
-	files := append(wdFiles, cfgFiles...)
+	if wdStr != runConfig.writeto {
+		wdFiles := getFiles(wdStr, runConfig.extensions)
+		files = append(files, wdFiles...)
+	}
 
 	items := []*tuido.Item{}
 	for _, f := range files {

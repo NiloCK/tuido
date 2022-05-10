@@ -21,6 +21,11 @@ type config struct {
 	writeto string
 }
 
+func (cfg config) String() string {
+	return fmt.Sprintf("extensions=%s\nwriteto=%s\n",
+		strings.Join(cfg.extensions, ","), cfg.writeto)
+}
+
 var runConfig config = config{
 	extensions: []string{"xit", "md", "txt"},
 	writeto:    "~/.tuido",
@@ -41,7 +46,6 @@ func parseConfigIfExists(configPath string) *config {
 
 	if config, err := os.Open(configPath); err == nil {
 		cfg := parseConfig(config)
-		fmt.Printf("reading config %s: %+v\n", configPath, cfg)
 		return &cfg
 	}
 	return nil

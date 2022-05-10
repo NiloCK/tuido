@@ -16,7 +16,7 @@ import (
 )
 
 func Run() {
-	wdStr, err := os.Getwd()
+	wdStr, err := os.Getwd() // [ ] only from cli flag? YES! or... follow .gitignore
 
 	if err != nil {
 		panic(err)
@@ -26,7 +26,10 @@ func Run() {
 	adoptConfigSettings(filepath.Join(wdStr, ".tuido"))
 	// [ ] read cli flags for added extensions / extension specificity
 
-	files := getFiles(wdStr, runConfig.extensions)
+	wdFiles := getFiles(wdStr, runConfig.extensions)
+	cfgFiles := getFiles(runConfig.writeto, runConfig.extensions)
+
+	files := append(wdFiles, cfgFiles...)
 
 	items := []*tuido.Item{}
 	for _, f := range files {
@@ -239,7 +242,6 @@ func getItems(file string) []*tuido.Item {
 func getFiles(wd string, extensions []string) []string {
 	files := []string{}
 	filepath.WalkDir(wd, func(path string, d fs.DirEntry, err error) error {
-
 		// apply .tuido configured extensions if they exist, but do not
 		// read a configured writeto. writeto is decided by the root
 		// working directory or user config

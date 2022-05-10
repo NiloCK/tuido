@@ -42,6 +42,11 @@ func loadFromDefaultConfigLocation() {
 	cfg := parseConfigIfExists(cfgPath)
 
 	if cfg != nil {
-		runConfig = *cfg
+		if len(cfg.extensions) != 0 {
+			runConfig.extensions = cfg.extensions
+		}
+		if cfg.writeto != "" {
+			runConfig.writeto = cfg.writeto
+		}
 	}
 }

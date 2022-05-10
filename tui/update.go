@@ -8,6 +8,8 @@ import (
 )
 
 func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// [ ] refactor as separate methods per mode
+
 	if t.mode == help {
 		if _, ok := msg.(tea.KeyMsg); ok {
 			t.mode = navigation

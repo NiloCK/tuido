@@ -27,6 +27,7 @@ func Run() {
 
 	files := getFiles(runConfig.writeto, runConfig.extensions)
 
+	// [ ] replace with subdir check
 	if wdStr != runConfig.writeto {
 		wdFiles := getFiles(wdStr, runConfig.extensions)
 		files = append(files, wdFiles...)

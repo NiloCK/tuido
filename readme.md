@@ -19,11 +19,20 @@ tuido
 
 ## Configuration
 
-Include a `.tuido` file in a directory to add specific filetypes for parsing, or a specific destination for new items to be written to:
+Tuido writes new items by default to `$HOME/.tuido/YYYY-MM-DD.xit`. To set a different write location, create file `tuido.conf` in the user config directory (`$HOME/.config` in linux, `$HOME/AppData` in windows). The write location can be a file, which will be appended to, or a directory, which whill recieve datestamped `.xit` files as in the default setting.
+
+```
+writeto=~/mysingletodolist.txt
+```
+
+```
+writeto=~/todos
+```
+
+Include a `.tuido` file in individual directories to add filetypes for parsing along that subtree.
 
 ```
 extensions=go,js,cpp
-writeto=~/mytodos.xit
 ```
 
 ### In app controls
@@ -49,8 +58,8 @@ writeto=~/mytodos.xit
 
 tuido is dogfooding. The project's `.tuido` file:
 
-- instructs tuido to parse items in from `.go` files as well as the defaults.
-- instructs tuido to write new items to this readme
+- instructs tuido to parse items in `.go` files as well as the defaults.
+- instructs tuido to write new items directly to this readme
 
 Result being that the app, runnng in test, contains a good running list of development todos & a convenient method to append to the roadmap.
 
@@ -60,18 +69,18 @@ GPL
 
 ## Roadmap
 
-- [@] #feat read a #config file from `~/.tuido/.config`, write by default to `~/.tuido/yyyy-mm-dd.xit`
-- [@] #feat make new-items repsect the filetype being written to (leading comment slashes for code files, leading bullet for readme, etc)
+- [ ] #feat make new-items repsect the filetype being written to (leading comment slashes for code files, leading bullet for readme, etc)
 - [ ] process due #dates
   - [ ] from items themselves, according to [x]it spec
   - [ ] (for creation #date) from the names of an item's source file
 - [ ] #ui sort items by priority, age, or due #dates
 - [ ] #feat #ui provide details / context (preview into source file) on current selected item, or quick open of an item's source location
 - [ ] #feat allow plain-text fuzzy text search/filter of item body text (only tag names)
-- [ ] #feat have a pomodoro mode for focused work on a specific item
+- [@] #feat have a pomodoro mode for focused work on a specific item
 - [ ] #feat specify / parse a format for recurring items (call mom, eat a salad)
 - [ ] #feat parse valued tags. EG, `#age=37` is parsed as a tag titled `age=37` rather than tag `age` with value `37`.
 - [ ] #feat contain the all-important [__z__: snooze] operation to bump an item's due date
 - [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui #maybe
 - [ ] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
 - [ ] #feat #maybe fully respect / implement the [x]it spec
+- [ ] #feat respect .gitignire configs

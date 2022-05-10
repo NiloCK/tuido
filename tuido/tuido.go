@@ -243,7 +243,12 @@ func New(
 		newItemRaw := "[ ] "
 
 		// append new blank todo to `file`
-		fInfo, _ := os.Stat(file)
+		fInfo, err := os.Stat(file)
+
+		if err != nil {
+			fmt.Printf("error checking if %s is a directory: %s\n", fInfo, err)
+		}
+
 		if fInfo.IsDir() {
 			file = filepath.Join(file, time.Now().Format("2006-01-02")+".xit") // xit, md, tbd
 		}

@@ -57,7 +57,11 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 		case "up":
 			t.setSelection(t.selection - 1)
+		case "k":
+			t.setSelection(t.selection - 1)
 		case "down":
+			t.setSelection(t.selection + 1)
+		case "j":
 			t.setSelection(t.selection + 1)
 		case "pgdown": // [ ] these paging functions are not "accurate" #ui #polish
 			t.setSelection(t.selection + (len(t.renderSelection) / (t.h - 6)))
@@ -89,7 +93,6 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.populateRenderSelection()
 			t.setSelection(0)
 			t.setEditMode()
-			return t, t.setEditMode()
 		case "?":
 			t.mode = help
 		case "q":

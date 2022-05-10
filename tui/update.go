@@ -82,7 +82,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "/":
 			t.filter.Focus()
 		case "e":
-			return t, t.setEditMode()
+			t.setEditMode()
 		case "n":
 			newItem := tuido.New(t.config.writeto, -1, "")
 			t.items = append([]*tuido.Item{&newItem}, t.items...)

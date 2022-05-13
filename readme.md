@@ -6,6 +6,7 @@ A terminal interface for efficient browsing and management of [[x]it!](https://g
 - [x] compactly displays pending todos and offers navigation between `todo` and `done`
 - [x] allows for creating new items, updating existing items, and persists updates to disk
 - [x] allows for filtering via `tags`
+- [x] a simple pomodoro mode for timeboxed focus on individual items
 
 ![tuidi preview](./preview.gif)
 
@@ -44,6 +45,7 @@ extensions=go,js,cpp
   - **s**, **~**: set status obsolete
   - **a**, **@**: set status ongoing
   - **e**: edit item text
+  - **p**: enter a pomodoro session for item
 - **[tab]**: switch between pending and done items
 - **/**: filter list by `#tags`
 - **[up]**, **[down]**: navigate items
@@ -70,13 +72,12 @@ GPL
 ## Roadmap
 
 - [ ] #feat make new-items repsect the filetype being written to (leading comment slashes for code files, leading bullet for readme, etc)
-- [ ] process due #dates
+- [@] process due #dates
   - [ ] from items themselves, according to [x]it spec
   - [ ] (for creation #date) from the names of an item's source file
 - [ ] #ui sort items by priority, age, or due #dates
 - [ ] #feat #ui provide details / context (preview into source file) on current selected item, or quick open of an item's source location
 - [ ] #feat allow plain-text fuzzy text search/filter of item body text (only tag names)
-- [@] #feat have a pomodoro mode for focused work on a specific item
 - [ ] #feat specify / parse a format for recurring items (call mom, eat a salad)
 - [ ] #feat parse valued tags. EG, `#age=37` is parsed as a tag titled `age=37` rather than tag `age` with value `37`.
 - [ ] #feat contain the all-important [__z__: snooze] operation to bump an item's due date

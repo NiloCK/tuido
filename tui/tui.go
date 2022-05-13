@@ -2,11 +2,14 @@ package tui
 
 import (
 	"bufio"
+	"fmt"
 	"io/fs"
 	"math/rand"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -67,6 +70,7 @@ func newTUI(items []*tuido.Item, cfg config) tui {
 		itemsFilter:     todo,
 		mode:            navigation,
 		selection:       0,
+		pomoEditor:      textinput.New(),
 		filter:          filter,
 		itemEditor:      itemEditor,
 		tagColors:       populateTagColorStyles(items),
@@ -78,6 +82,8 @@ func newTUI(items []*tuido.Item, cfg config) tui {
 // populateTagColorStyles returns a coloring style for
 // each #tag that exists in the list of items.
 func populateTagColorStyles(items []*tuido.Item) map[string]lg.Style {
+	// [ ] this should be recalculated / shifted when new tags are added
+	// [ ] audit: results in UI suggest a bug. Colors seem clustered.
 	var tags []string
 	for _, item := range items {
 		tags = append(tags, item.Tags()...)
@@ -106,6 +112,7 @@ const (
 	filter
 	edit
 	help
+	pomo
 )
 
 type tui struct {
@@ -124,6 +131,10 @@ type tui struct {
 	filter     textinput.Model
 	itemEditor textinput.Model
 
+	pomoEditor textinput.Model
+	pomoTimer  time.Ticker
+	pomoClock  int
+
 	tagColors map[string]lg.Style
 
 	// height of the window
@@ -137,6 +148,39 @@ func (t *tui) setSelection(s int) {
 	s = max(s, 0)
 
 	t.selection = s
+}
+
+type tickMsg time.Time
+
+func tick() tea.Cmd {
+	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
+
+func (t *tui) setPomoMode() tea.Cmd {
+	t.mode = pomo
+
+	t.pomoEditor.Focus()
+	t.pomoEditor.SetValue("")
+	t.pomoTimer.Stop()
+
+	return nil
+}
+
+func (t *tui) startPomo() {
+	if t.pomoEditor.Value() == "" {
+		return
+	}
+
+	var err error
+	t.pomoClock, err = strconv.Atoi(t.pomoEditor.Value())
+	t.pomoClock *= 60
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 func (t *tui) setEditMode() tea.Cmd {
@@ -216,7 +260,7 @@ func (t *tui) populateRenderSelection() {
 	t.setSelection(t.selection)
 }
 
-func (t tui) Init() tea.Cmd { return textinput.Blink }
+func (t tui) Init() tea.Cmd { return tick() }
 
 func getItems(file string) []*tuido.Item {
 	items := []*tuido.Item{}

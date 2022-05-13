@@ -108,6 +108,24 @@ func (t tui) View() string {
 		return ""
 	}
 	switch t.mode {
+	case pomo:
+		ret := t.renderedItemCollection()[t.selection] + "\n\n"
+		if t.pomoClock > 0 {
+			if t.pomoClock > 60 {
+				ret += fmt.Sprint(t.pomoClock / 60)
+			} else {
+				ret += fmt.Sprint(t.pomoClock)
+			}
+		} else {
+			ret += t.pomoEditor.View()
+		}
+
+		return lg.NewStyle().
+			Align(lg.Left).
+			Margin(2).
+			Width(t.w / 2).
+			Render(ret)
+
 	case help:
 		ret := "\n[press any key to exit help]\n\n"
 		ret += "n: new item\ne: edit item\n\n"

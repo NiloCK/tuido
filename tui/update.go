@@ -9,11 +9,54 @@ import (
 
 func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// [ ] refactor as separate methods per mode
+	if _, ok := msg.(tickMsg); ok {
+		t.pomoClock--
+		if t.pomoClock == 1 {
+			t.mode = navigation
+		}
+		if t.pomoClock < 0 {
+			t.pomoClock = 0
+		}
+		return t, tick()
+	}
 
 	if t.mode == help {
 		if _, ok := msg.(tea.KeyMsg); ok {
 			t.mode = navigation
 			return t, nil
+		}
+	}
+
+	if t.mode == pomo {
+		if t.pomoClock > 0 {
+			return t, nil // no msg processing other than the timer during a running clock
+		}
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			str := msg.String()
+			if str == "1" ||
+				str == "2" ||
+				str == "3" ||
+				str == "4" ||
+				str == "5" ||
+				str == "6" ||
+				str == "7" ||
+				str == "8" ||
+				str == "9" ||
+				str == "0" ||
+				str == "backspace" {
+				var cmd tea.Cmd
+				t.pomoEditor, cmd = t.pomoEditor.Update(msg)
+
+				return t, cmd
+			}
+			if str == "enter" {
+				t.startPomo()
+			}
+			if str == "esc" {
+				t.pomoEditor.Reset()
+				t.mode = navigation
+			}
 		}
 	}
 
@@ -95,6 +138,8 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.populateRenderSelection()
 			t.setSelection(0)
 			t.setEditMode()
+		case "p":
+			t.setPomoMode()
 		case "?":
 			t.mode = help
 		case "q":

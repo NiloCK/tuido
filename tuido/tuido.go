@@ -179,7 +179,7 @@ func (i Item) Text() string {
 	return i.trimmed()[3:]
 }
 
-func (i Item) Tags() []string {
+func (i Item) Tags() []Tag {
 	return Tags(i.Text())
 }
 
@@ -191,7 +191,7 @@ func (i Item) Tags() []string {
 //
 // [ ] unit #test this w/ a bunch of expected passes & failures
 // [ ] #maybe allow numbered md lists (1. [ ] ...)
-// [@] #maybe include a language map for code-comment parsing. ie, {".rb": "#", ".go": "//"}
+// [ ] #maybe include a language map for code-comment parsing. ie, {".rb": "#", ".go": "//"}
 // [ ] #maybe require a file extension for this fcn. Allows for PL specific rules, as well as md
 func IsTuido(raw string) bool {
 	trimmed := trim(raw)
@@ -282,15 +282,44 @@ func New(
 	}
 }
 
-func Tags(s string) []string {
-	tags := []string{}
+func Tags(s string) []Tag {
+	tags := []Tag{}
 	split := strings.Split(s, " ")
 
 	for _, token := range split {
 		if strings.HasPrefix(token, "#") && len(token) > 1 {
-			tags = append(tags, token[1:])
+			tags = append(tags, newTag(token[1:]))
 		}
 	}
 
 	return tags
+}
+
+type Tag struct {
+	name  string
+	value string
+}
+
+func (t Tag) Name() string {
+	return t.name
+}
+func (t Tag) String() string {
+	if t.value != "" {
+		return fmt.Sprintf("%s=%s", t.name, t.value)
+	}
+
+	return t.name
+}
+
+func newTag(s string) Tag {
+	split := strings.Split(s, "=")
+	if len(split) == 2 {
+		return Tag{
+			name:  split[0],
+			value: split[1],
+		}
+	}
+	return Tag{
+		name: s,
+	}
 }

@@ -84,7 +84,7 @@ func newTUI(items []*tuido.Item, cfg config) tui {
 func populateTagColorStyles(items []*tuido.Item) map[string]lg.Style {
 	// [ ] this should be recalculated / shifted when new tags are added
 	// [ ] audit: results in UI suggest a bug. Colors seem clustered.
-	var tags []string
+	var tags []tuido.Tag
 	for _, item := range items {
 		tags = append(tags, item.Tags()...)
 	}
@@ -95,7 +95,7 @@ func populateTagColorStyles(items []*tuido.Item) map[string]lg.Style {
 
 	for i, tag := range tags {
 		hue := int(offset+float64(i)*interval) % 360
-		tagColors[tag] = lg.NewStyle().
+		tagColors[tag.Name()] = lg.NewStyle().
 			Foreground(
 				lg.Color(
 					colorful.Hcl(float64(hue), .9, 0.85).Clamped().Hex(),
@@ -245,7 +245,7 @@ func (t *tui) populateRenderSelection() {
 			for _, iTag := range itemTags {
 				for _, fTag := range filterTags {
 					// [ ] should not use the prefix when a tag is "complete" (followed by a space) in the prompt
-					if strings.HasPrefix(iTag, fTag) {
+					if strings.HasPrefix(iTag.Name(), fTag.Name()) {
 						filtered = append(filtered, item)
 						continue
 					}

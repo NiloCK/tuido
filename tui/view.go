@@ -230,7 +230,7 @@ func (t tui) renderTuido(item tuido.Item) string {
 	tags := item.Tags()
 
 	for _, tag := range tags {
-		ret = strings.ReplaceAll(ret, "#"+tag, t.tagColors[tag].Render("#"+tag))
+		ret = strings.ReplaceAll(ret, "#"+tag.String(), t.tagColors[tag.Name()].Render("#"+tag.String()))
 	}
 
 	return ret

@@ -256,6 +256,21 @@ func (t *tui) populateRenderSelection() {
 		t.renderSelection = filtered
 	}
 
+	sort.Slice(t.renderSelection, func(i, j int) bool {
+		x := t.renderSelection[i].Due()
+		y := t.renderSelection[j].Due()
+
+		if x == nil && y == nil {
+			return true
+		} else if x == nil && y != nil {
+			return false
+		} else if x != nil && y == nil {
+			return true
+		} else {
+			return x.Before(*y)
+		}
+	})
+
 	// ensure the previous selection value is still in range
 	t.setSelection(t.selection)
 }

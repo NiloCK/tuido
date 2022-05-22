@@ -64,9 +64,7 @@ type Item struct {
 
 	// item data
 
-	raw  string
-	due  time.Time
-	tags []string
+	raw string
 }
 
 func (i *Item) Location() string {
@@ -181,6 +179,20 @@ func (i Item) Text() string {
 
 func (i Item) Tags() []Tag {
 	return Tags(i.Text())
+}
+
+func (i Item) Due() *time.Time {
+	for _, t := range i.Tags() {
+		if t.name == "due" { // [ ] make a const enum somewhere - appTags or something
+			ret, err := time.Parse("2006-01-02", t.value)
+			if err != nil {
+				panic(err)
+			}
+
+			return &ret
+		}
+	}
+	return nil
 }
 
 // IsTuido inspects a raw string for parsibility into a tuido item.

@@ -109,6 +109,8 @@ func (i *Item) SetStatus(s status) error {
 //
 // If the disk write fails, the in-memory update is abandoned.
 func (i *Item) SetText(t string) error {
+	t = expandDateShorthands(t)
+
 	if i == nil {
 		return fmt.Errorf("item is nil - cannot update text")
 	}
@@ -324,7 +326,6 @@ func New(
 		file: file,
 		line: line,
 		raw:  raw,
-		due:  time.Now(), // todo
 	}
 }
 

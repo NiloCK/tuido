@@ -181,18 +181,52 @@ func (i Item) Tags() []Tag {
 	return Tags(i.Text())
 }
 
-func (i Item) Due() *time.Time {
+// Active returns the "active" status for snoozed items.
+// Items with `active` tags later than the current date will not
+// be shown in the regular view. Defaults to true.
+func (i Item) Active() bool {
 	for _, t := range i.Tags() {
-		if t.name == "due" { // [ ] make a const enum somewhere - appTags or something
-			ret, err := time.Parse("2006-01-02", t.value)
-			if err != nil {
-				panic(err)
-			}
+		if t.name == "active" {
+			return parseTagDate(t).Before(time.Now())
+		}
+	}
+	return true
+}
 
-			return &ret
+func (i Item) Created() *time.Time {
+	for _, t := range i.Tags() {
+		if t.name == "created" {
+			return parseTagDate(t)
+		}
+	}
+	for c := range i.file {
+		l := len("2006-01-02")
+		if c+l < len(i.file) {
+			sStr := i.file[c : c+l]
+			if d, err := time.Parse("2006-01-02", sStr); err == nil {
+				return &d
+			}
 		}
 	}
 	return nil
+}
+
+func (i Item) Due() *time.Time {
+	for _, t := range i.Tags() {
+		if t.name == "due" { // [ ] make a const enum somewhere - appTags or something
+			return parseTagDate(t)
+		}
+	}
+	return nil
+}
+
+func parseTagDate(t Tag) *time.Time {
+	ret, err := time.Parse("2006-01-02", t.value)
+	if err != nil {
+		panic(err)
+	}
+
+	return &ret
 }
 
 // IsTuido inspects a raw string for parsibility into a tuido item.

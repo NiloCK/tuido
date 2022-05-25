@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -124,6 +125,59 @@ func (i *Item) SetText(t string) error {
 	return nil
 }
 
+func (i *Item) Snooze() error {
+	count := i.snoozeCount()
+	count++
+
+	// i.set("active", time.Now() + fib(count) days)
+	i.setTag(Tag{
+		"active",
+		time.Now().Add(time.Hour * time.Duration(24*fib(count))).Format("2006-01-02"),
+	})
+	// i.set("zzz", count)
+	return i.setTag(Tag{"zzz", fmt.Sprint(count)})
+}
+
+func fib(n int) int {
+	if n <= 0 {
+		return 0
+	}
+	if n == 1 {
+		return 1
+	}
+	if n == 2 {
+		return 2
+	}
+
+	return fib(n-1) + fib(n-2)
+}
+
+func (i *Item) snoozeCount() int {
+	for _, tag := range i.Tags() {
+		if tag.name == "zzz" {
+			count, _ := strconv.Atoi(tag.value)
+			return count
+		}
+	}
+
+	return 0
+}
+
+func (i *Item) setTag(t Tag) error {
+	// replace existing value, if exists
+	for _, tag := range i.Tags() {
+		if tag.name == t.name {
+			txt := strings.Replace(i.Text(), tag.String(), t.String(), 1)
+
+			return i.SetText(txt)
+		}
+	}
+
+	// else, append new tag
+	txt := i.Text() + " #" + t.String()
+	return i.SetText(txt)
+}
+
 // fileInsert replaces the lineNumberth line of file with updated, as long
 // it finds that the current contents of that line are as expected.
 func fileInsert(file string, lineNumber int, expected string, updated string) error {
@@ -225,7 +279,7 @@ func (i Item) Due() *time.Time {
 func parseTagDate(t Tag) *time.Time {
 	ret, err := time.Parse("2006-01-02", t.value)
 	if err != nil {
-		panic(err)
+		// panic(err)
 	}
 
 	return &ret

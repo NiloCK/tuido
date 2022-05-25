@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -28,9 +29,18 @@ func Run() {
 	adoptConfigSettings(filepath.Join(wdStr, ".tuido"))
 	// [ ] read cli flags for added extensions / extension specificity
 
-	files := getFiles(runConfig.writeto, runConfig.extensions)
+	files := []string{}
 
-	// [ ] replace with subdir check
+	wtStat, err := os.Stat(runConfig.writeto)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if wtStat.IsDir() {
+		files = append(files, getFiles(runConfig.writeto, runConfig.extensions)...)
+	}
+
+	// [ ] replace with subdir check #active=2022-05-26 #zzz=2
 	if wdStr != runConfig.writeto {
 		wdFiles := getFiles(wdStr, runConfig.extensions)
 		files = append(files, wdFiles...)
@@ -40,6 +50,21 @@ func Run() {
 	for _, f := range files {
 		items = append(items, getItems(f)...)
 	}
+
+	sort.Slice(items, func(i, j int) bool {
+		x := items[i].Due()
+		y := items[j].Due()
+
+		if x == nil && y == nil {
+			return true
+		} else if x == nil && y != nil {
+			return false
+		} else if x != nil && y == nil {
+			return true
+		} else {
+			return x.Before(*y)
+		}
+	})
 
 	prog := tea.NewProgram(newTUI(items, runConfig), tea.WithAltScreen())
 
@@ -83,7 +108,7 @@ func newTUI(items []*tuido.Item, cfg config) tui {
 // each #tag that exists in the list of items.
 func populateTagColorStyles(items []*tuido.Item) map[string]lg.Style {
 	// [ ] this should be recalculated / shifted when new tags are added
-	// [ ] audit: results in UI suggest a bug. Colors seem clustered.
+	// [ ] audit: results in UI suggest a bug. Colors seem clustered. ##active=2022-05-26 ##zzz=2 #active=2022-05-25 #zzz=1
 	var tags []tuido.Tag
 	for _, item := range items {
 		tags = append(tags, item.Tags()...)
@@ -220,7 +245,8 @@ func (t *tui) populateRenderSelection() {
 
 	if t.itemsFilter == todo {
 		for _, i := range t.items {
-			if i.Satus() == tuido.Ongoing || i.Satus() == tuido.Open {
+			if (i.Satus() == tuido.Ongoing || i.Satus() == tuido.Open) &&
+				i.Active() {
 				t.renderSelection = append(t.renderSelection, i)
 			}
 		}
@@ -234,6 +260,12 @@ func (t *tui) populateRenderSelection() {
 		}
 	}
 
+	t.applyTagFilters()
+	// ensure the previous selection value is still in range
+	t.setSelection(t.selection)
+}
+
+func (t *tui) applyTagFilters() {
 	filterTags := tuido.Tags(t.filter.Value())
 	if len(filterTags) != 0 {
 
@@ -255,24 +287,6 @@ func (t *tui) populateRenderSelection() {
 
 		t.renderSelection = filtered
 	}
-
-	sort.Slice(t.renderSelection, func(i, j int) bool {
-		x := t.renderSelection[i].Due()
-		y := t.renderSelection[j].Due()
-
-		if x == nil && y == nil {
-			return true
-		} else if x == nil && y != nil {
-			return false
-		} else if x != nil && y == nil {
-			return true
-		} else {
-			return x.Before(*y)
-		}
-	})
-
-	// ensure the previous selection value is still in range
-	t.setSelection(t.selection)
 }
 
 func (t tui) Init() tea.Cmd { return tick() }
@@ -301,6 +315,7 @@ func getItems(file string) []*tuido.Item {
 }
 
 func getFiles(wd string, extensions []string) []string {
+
 	files := []string{}
 	filepath.WalkDir(wd, func(path string, d fs.DirEntry, err error) error {
 		// apply .tuido configured extensions if they exist, but do not

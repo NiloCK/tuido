@@ -140,6 +140,8 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.setEditMode()
 		case "p":
 			t.setPomoMode()
+		case "z":
+			t.currentSelection().Snooze()
 		case "?":
 			t.mode = help
 		case "q":

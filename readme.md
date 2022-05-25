@@ -7,6 +7,7 @@ A terminal interface for efficient browsing and management of [[x]it!](https://g
 - [x] allows for creating new items, updating existing items, and persists updates to disk
 - [x] allows for filtering via `tags`
 - [x] a simple pomodoro mode for timeboxed focus on individual items
+- [x] one-button (`z`) progressive snooze parks items for 1,2,3,5,8,... days
 
 ![tuidi preview](./preview.gif)
 
@@ -39,6 +40,7 @@ extensions=go,js,cpp
 ### In app controls
 
 - **?**: help
+- **n**: make a new item
 - slected item controls:
   - **[space]**: set status open
   - **x**, **X**: set status checked (done)
@@ -46,6 +48,7 @@ extensions=go,js,cpp
   - **a**, **@**: set status ongoing
   - **e**: edit item text
   - **p**: enter a pomodoro session for item
+  - **z**: snooze this item (set a later active date)
 - **[tab]**: switch between pending and done items
 - **/**: filter list by `#tags`
 - **[up]**, **[down]**: navigate items
@@ -72,16 +75,18 @@ GPL
 ## Roadmap
 
 - [ ] #feat make new-items repsect the filetype being written to (leading comment slashes for code files, leading bullet for readme, etc)
-- [@] process due #dates
-  - [ ] from items themselves, according to [x]it spec
+- [@] process #dates
+  - [ ] from items themselves
+    - [x] from #due tags
+    - [ ] according to [x]it spec
   - [ ] (for creation #date) from the names of an item's source file
-- [ ] #ui sort items by priority, age, or due #dates
+- [@] #ui sort items by priority, age, or due #dates
 - [ ] #feat #ui provide details / context (preview into source file) on current selected item, or quick open of an item's source location
-- [ ] #feat allow plain-text fuzzy text search/filter of item body text (only tag names)
-- [ ] #feat specify / parse a format for recurring items (call mom, eat a salad)
-- [ ] #feat parse valued tags. EG, `#age=37` is parsed as a tag titled `age=37` rather than tag `age` with value `37`.
-- [ ] #feat contain the all-important [__z__: snooze] operation to bump an item's due date
+- [ ] #feat allow plain-text fuzzy text search/filter of item body text (only tag names currently)
+- [@] #feat specify / parse a format for recurring items (call mom, eat a salad)
+  - [x] #repeat=durationShorthand is active
+  - [@] need to mark open + postpone + set new due date on `x` done markers
 - [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui #maybe
-- [ ] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
+- [@] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
 - [ ] #feat #maybe fully respect / implement the [x]it spec
 - [ ] #feat respect .gitignire configs

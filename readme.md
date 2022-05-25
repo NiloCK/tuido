@@ -90,3 +90,4 @@ GPL
 - [@] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
 - [ ] #feat #maybe fully respect / implement the [x]it spec
 - [ ] #feat respect .gitignire configs
+- [ ] tag v0.0.1, produce platform builds

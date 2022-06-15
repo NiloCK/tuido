@@ -108,6 +108,8 @@ func (t tui) View() string {
 		return ""
 	}
 	switch t.mode {
+	case nag:
+		return t.nag.View()
 	case pomo:
 		ret := t.renderedItemCollection()[t.selection] + "\n\n"
 		if t.pomoClock > 0 {

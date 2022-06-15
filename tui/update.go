@@ -20,6 +20,15 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return t, tick()
 	}
 
+	if t.mode == nag {
+		mode, complete := t.nag.Update(msg)
+		t.mode = mode
+		if t.mode == navigation && complete { // [ ] need to switch on some nag content?
+			t.createNewItem()
+		}
+		return t, nil
+	}
+
 	if t.mode == help {
 		if _, ok := msg.(tea.KeyMsg); ok {
 			t.mode = navigation
@@ -133,11 +142,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "e":
 			t.setEditMode()
 		case "n":
-			newItem := tuido.New(t.config.writeto, -1, "")
-			t.items = append([]*tuido.Item{&newItem}, t.items...)
-			t.populateRenderSelection()
-			t.setSelection(0)
-			t.setEditMode()
+			t.tryCreateNewItem()
 		case "p":
 			t.setPomoMode()
 		case "z":
@@ -153,4 +158,20 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		t.w = msg.Width
 	}
 	return t, nil
+}
+
+func (t *tui) tryCreateNewItem() {
+	if len(t.renderSelection) >= 5 {
+		t.setNag("Too many items on your plate...", len(t.renderSelection)-4, navigation)
+	} else {
+		t.createNewItem()
+	}
+}
+
+func (t *tui) createNewItem() {
+	newItem := tuido.New(t.config.writeto, -1, "")
+	t.items = append([]*tuido.Item{&newItem}, t.items...)
+	t.populateRenderSelection()
+	t.setSelection(0)
+	t.setEditMode()
 }

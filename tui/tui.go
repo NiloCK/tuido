@@ -138,6 +138,7 @@ const (
 	edit
 	help
 	pomo
+	nag
 )
 
 type tui struct {
@@ -159,6 +160,8 @@ type tui struct {
 	pomoEditor textinput.Model
 	pomoTimer  time.Ticker
 	pomoClock  int
+
+	nag nagScreen
 
 	tagColors map[string]lg.Style
 

@@ -76,11 +76,11 @@ GPL
 
 - [ ] #feat make new-items repsect the filetype being written to (leading comment slashes for code files, leading bullet for readme, etc)
 - [@] process #dates
-  - [ ] from items themselves
+  - [x] from items themselves
     - [x] from #due tags
     - [ ] according to [x]it spec
-  - [ ] (for creation #date) from the names of an item's source file
-- [@] #ui sort items by priority, age, or due #dates
+  - [x] (for creation #date) from the names of an item's source file
+- [@] #ui sort items by priority [ ], age [ ], or due #dates [x]
 - [ ] #feat #ui provide details / context (preview into source file) on current selected item, or quick open of an item's source location
 - [ ] #feat allow plain-text fuzzy text search/filter of item body text (only tag names currently)
 - [@] #feat specify / parse a format for recurring items (call mom, eat a salad)
@@ -91,3 +91,4 @@ GPL
 - [ ] #feat #maybe fully respect / implement the [x]it spec
 - [ ] #feat respect .gitignire configs
 - [ ] tag v0.0.1, produce platform builds
+- [ ] add quick-escalate (!) importance modifier

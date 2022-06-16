@@ -52,6 +52,13 @@ func Run() {
 	}
 
 	sort.Slice(items, func(i, j int) bool {
+		if items[i].Importance() > items[j].Importance() {
+			return true
+		}
+		if items[i].Importance() < items[j].Importance() {
+			return false
+		}
+
 		x := items[i].Due()
 		y := items[j].Due()
 

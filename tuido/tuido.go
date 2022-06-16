@@ -230,7 +230,7 @@ func (i Item) String() string {
 //
 // the Text() is "this one is done"
 func (i Item) Text() string {
-	return i.trimmed()[3:]
+	return i.trimmed()[4:]
 }
 
 func (i Item) Tags() []Tag {
@@ -247,6 +247,24 @@ func (i Item) Active() bool {
 		}
 	}
 	return true
+}
+
+// Importance returns the number of leading '!'s in
+// the item's Text.
+func (i Item) Importance() int {
+	count := 0
+	txt := i.Text()
+
+	for _, ch := range txt {
+		if ch == '!' {
+			count++
+		} else if ch == '.' {
+		} else {
+			return count
+		}
+	}
+
+	return count
 }
 
 func (i Item) Created() *time.Time {

@@ -202,7 +202,7 @@ func (t *tui) renderVisibleListedItems(availableHeight int) string {
 }
 
 func (t tui) renderedItemCollection() []string {
-	// [ ]: `selected` style does not apply past the first tag
+	// [ ] `selected` style does not apply past the first tag
 	selected := lg.NewStyle().Bold(true)
 
 	renderedItems := []string{}

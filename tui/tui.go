@@ -51,27 +51,7 @@ func Run() {
 		items = append(items, getItems(f)...)
 	}
 
-	sort.Slice(items, func(i, j int) bool {
-		if items[i].Importance() > items[j].Importance() {
-			return true
-		}
-		if items[i].Importance() < items[j].Importance() {
-			return false
-		}
-
-		x := items[i].Due()
-		y := items[j].Due()
-
-		if x == nil && y == nil {
-			return true
-		} else if x == nil && y != nil {
-			return false
-		} else if x != nil && y == nil {
-			return true
-		} else {
-			return x.Before(*y)
-		}
-	})
+	sortItems(items)
 
 	prog := tea.NewProgram(newTUI(items, runConfig), tea.WithAltScreen())
 
@@ -272,6 +252,7 @@ func (t *tui) populateRenderSelection() {
 
 	t.applyTagFilters()
 	// ensure the previous selection value is still in range
+	sortItems(t.renderSelection)
 	t.setSelection(t.selection)
 }
 
@@ -351,4 +332,28 @@ func getFiles(wd string, extensions []string) []string {
 		return nil
 	})
 	return files
+}
+
+func sortItems(items []*tuido.Item) {
+	sort.Slice(items, func(i, j int) bool {
+		if items[i].Importance() > items[j].Importance() {
+			return true
+		}
+		if items[i].Importance() < items[j].Importance() {
+			return false
+		}
+
+		x := items[i].Due()
+		y := items[j].Due()
+
+		if x == nil && y == nil {
+			return true
+		} else if x == nil && y != nil {
+			return false
+		} else if x != nil && y == nil {
+			return true
+		} else {
+			return x.Before(*y)
+		}
+	})
 }

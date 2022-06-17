@@ -116,7 +116,7 @@ func (i *Item) SetText(t string) error {
 		return fmt.Errorf("item is nil - cannot update text")
 	}
 
-	newRaw := i.scrap() + i.Satus().String() + t
+	newRaw := i.scrap() + i.Satus().String() + " " + t
 	err := fileInsert(i.file, i.line, i.raw, newRaw)
 	if err != nil {
 		return err
@@ -136,6 +136,21 @@ func (i *Item) Snooze() error {
 	})
 	// i.set("zzz", count)
 	return i.setTag(Tag{"zzz", fmt.Sprint(count)})
+}
+
+// Escalate increases the "importance" of an item by prefixing it
+// with an exclamation point
+func (i *Item) Escalate() error {
+	txt := i.Text()
+	if len(txt) == 0 {
+		return i.SetText("!")
+	}
+
+	if txt[0] == '!' {
+		return i.SetText("!" + txt)
+	}
+
+	return i.SetText("! " + txt)
 }
 
 func fib(n int) int {
@@ -287,7 +302,7 @@ func (i Item) Created() *time.Time {
 
 func (i Item) Due() *time.Time {
 	for _, t := range i.Tags() {
-		if t.name == "due" { // [ ] make a const enum somewhere - appTags or something
+		if t.name == "due" { //  [ ]!  make a const enum somewhere - appTags or something
 			return parseTagDate(t)
 		}
 	}
@@ -312,7 +327,7 @@ func parseTagDate(t Tag) *time.Time {
 // [ ] unit #test this w/ a bunch of expected passes & failures
 // [ ] #maybe allow numbered md lists (1. [ ] ...)
 // [ ] #maybe include a language map for code-comment parsing. ie, {".rb": "#", ".go": "//"}
-// [ ] #maybe require a file extension for this fcn. Allows for PL specific rules, as well as md
+//  [ ]! #maybe require a file extension for this fcn. Allows for PL specific rules, as well as md
 func IsTuido(raw string) bool {
 	trimmed := trim(raw)
 
@@ -358,7 +373,7 @@ func New(
 	line int,
 	raw string,
 ) Item {
-	// [ ] replace this magic # w/ better named ctors
+	// [ ] !!!!!!! replace this magic # w/ better named ctors
 	if line < 0 { // this is a new item authored in-tui
 		newItemRaw := "[ ] "
 

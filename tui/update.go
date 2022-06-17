@@ -109,6 +109,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		switch msg.String() {
+		// navigation
 		case "up":
 			t.setSelection(t.selection - 1)
 		case "k":
@@ -123,6 +124,13 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.setSelection(t.selection - (len(t.renderSelection) / (t.h - 6)))
 		case "tab":
 			t.tab()
+		case "/":
+			t.filter.Focus()
+		case "p":
+			t.setPomoMode()
+		case "?":
+			t.mode = help
+		// editing current selection
 		case "x":
 			t.currentSelection().SetStatus(tuido.Checked)
 		case "-":
@@ -137,18 +145,21 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.currentSelection().SetStatus(tuido.Ongoing)
 		case " ":
 			t.currentSelection().SetStatus(tuido.Open)
-		case "/":
-			t.filter.Focus()
+		case "!":
+			current := t.currentSelection()
+			t.currentSelection().Escalate()
+			t.populateRenderSelection()
+			for i, item := range t.renderSelection {
+				if current == item {
+					t.setSelection(i)
+				}
+			}
 		case "e":
 			t.setEditMode()
 		case "n":
 			t.tryCreateNewItem()
-		case "p":
-			t.setPomoMode()
 		case "z":
 			t.currentSelection().Snooze()
-		case "?":
-			t.mode = help
 		case "q":
 			return t, tea.Quit
 		}

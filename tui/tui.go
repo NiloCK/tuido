@@ -251,8 +251,8 @@ func (t *tui) populateRenderSelection() {
 	}
 
 	t.applyTagFilters()
-	// ensure the previous selection value is still in range
 	sortItems(t.renderSelection)
+	// ensure the previous selection value is still in range
 	t.setSelection(t.selection)
 }
 

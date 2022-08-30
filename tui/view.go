@@ -129,15 +129,15 @@ func (t tui) View() string {
 			Render(ret)
 
 	case help:
-		ret := "\n[press any key to exit help]\n\n"
-		ret += "n: new item\ne: edit item\nz: snooze item\np: begin a pomodoro\n\n"
-		ret += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
-		ret += "[tab]: cycle between todo and done tabs\n/: filter todos by tag\n?: enter help\n\n"
-		ret += "q: quit"
+		controls := "\n[press any key to exit help]\n\n"
+		controls += "n: new item\ne: edit item\nz: snooze item\n!: escalate item\np: begin a pomodoro\n\n"
+		controls += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
+		controls += "[tab]: cycle between todo and done tabs\n/: filter todos by tag\n?: enter help\n\n"
+		controls += "q: quit"
 
 		txt := lg.NewStyle().Width(28).Align(lg.Left).
-			Render("\ntuido reads txt, md, and xit files from the working directory and locates xit style todo items, allowing for quick navigation and discovery.\n\nUpdating an item's status in tuido writes the corresponding change to disk.")
-		return lg.JoinHorizontal(lg.Top, "  ", ret, "   ", txt)
+			Render("\n\n\ntuido reads txt, md, and xit files from the working directory and locates xit style todo items, allowing for quick navigation and discovery.\n\nUpdating an item's status in tuido writes the corresponding change to disk.")
+		return lg.JoinHorizontal(lg.Top, "  ", controls, "    ", txt)
 	default:
 		if len(t.renderSelection) == 0 { // init population
 			t.populateRenderSelection()

@@ -1,4 +1,4 @@
-A terminal interface for efficient browsing and management of [[x]it!](https://github.com/jotaen/xit) formatted todo items. Inspired, loosely, by _Getting Things Done_ (David Allen) and various entries of the self-help skills via habits genre (Charles Duhigg, James Clear, Anders Ericsson, etc).
+An opinionated terminal interface for efficient browsing and management of [[x]it!](https://github.com/jotaen/xit) formatted todo items. Inspired, loosely, by _Getting Things Done_ (David Allen) and informed by various entries of the self-help skills & habits genre (Charles Duhigg, James Clear, Anders Ericsson, etc).
 
 ## Features
 
@@ -8,6 +8,7 @@ A terminal interface for efficient browsing and management of [[x]it!](https://g
 - [x] allows for filtering via `tags`
 - [x] a simple pomodoro mode for timeboxed focus on individual items
 - [x] one-button (`z`) progressive snooze parks items for 1,2,3,5,8,... days
+- [x] progressive deterrence for adding new items
 
 ![tuidi preview](./preview.gif)
 

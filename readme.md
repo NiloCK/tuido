@@ -20,24 +20,6 @@ From some directory containing `[x]it!` files / items:
 tuido
 ```
 
-## Configuration
-
-Tuido writes new items by default to `$HOME/.tuido/YYYY-MM-DD.xit`. To set a different write location, create file `tuido.conf` in the user config directory (`$HOME/.config` in linux, `$HOME/AppData` in windows). The write location can be a file, which will be appended to, or a directory, which whill recieve datestamped `.xit` files as in the default setting.
-
-```
-writeto=~/mysingletodolist.txt
-```
-
-```
-writeto=~/todos
-```
-
-Include a `.tuido` file in individual directories to add filetypes for parsing along that subtree.
-
-```
-extensions=go,js,cpp
-```
-
 ### In app controls
 
 - **?**: help
@@ -55,6 +37,24 @@ extensions=go,js,cpp
 - **/**: filter list by `#tags`
 - **[up]**, **[down]**: navigate items
 - **q**: quit
+
+## Configuration
+
+Tuido writes new items by default to `$HOME/.tuido/YYYY-MM-DD.xit`. To set a different write location, create file `tuido.conf` in the user config directory (`$HOME/.config` in linux, `$HOME/AppData` in windows). The write location can be a file, which will be appended to, or a directory, which whill recieve datestamped `.xit` files as in the default setting.
+
+```
+writeto=~/mysingletodolist.txt
+```
+
+```
+writeto=~/todos
+```
+
+Include a `.tuido` file in individual directories to add filetypes for parsing along that subtree.
+
+```
+extensions=go,js,cpp
+```
 
 ## Development
 

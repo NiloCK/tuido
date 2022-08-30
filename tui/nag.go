@@ -32,7 +32,7 @@ func (n *nagScreen) View() string {
 	str := s.Render("type \"" + n.nagText + "\" to continue.")
 	footer := s.Faint(true).Render("esc: back to item navigation")
 
-	return lg.JoinVertical(lg.Center, prompt, str, footer)
+	return lg.JoinVertical(lg.Left, prompt, str, footer)
 }
 
 func (n *nagScreen) Update(msg tea.Msg) (mode, bool) {

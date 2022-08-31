@@ -93,6 +93,20 @@ func (i *Item) SetStatus(s status) error {
 	if i == nil {
 		return fmt.Errorf("item is nil - cannot update status")
 	}
+	if s == Checked {
+		repeat := i.Repeat()
+		if repeat != nil {
+			i.setTag(Tag{
+				name:  "due",
+				value: time.Now().Add(*repeat).Format("2006-01-02"),
+			})
+
+			// prevent fall-through - we no longer want this to be
+			// marked "done". It's only been pushed into the future
+			return nil
+		}
+		// [ ] add #completed=[currentDate] if s == Checked?
+	}
 
 	newRaw := i.scrap() + s.String() + i.Text()
 
@@ -297,6 +311,16 @@ func (i Item) Created() *time.Time {
 			}
 		}
 	}
+	return nil
+}
+
+func (i Item) Repeat() *time.Duration {
+	for _, t := range i.Tags() {
+		if t.name == "repeat" {
+			return toDuration(t.value)
+		}
+	}
+
 	return nil
 }
 

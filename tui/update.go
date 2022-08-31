@@ -181,8 +181,11 @@ func (t *tui) tryCreateNewItem() {
 
 func (t *tui) createNewItem() {
 	newItem := tuido.New(t.config.writeto, -1, "")
-	t.items = append([]*tuido.Item{&newItem}, t.items...)
-	t.populateRenderSelection()
-	t.setSelection(0)
+	t.items = append(t.items, &newItem)
+	// write directly to renderselection instead of repopulating,
+	// to avoid a sorting move before setSelection is called.
+	t.renderSelection = append(t.renderSelection, &newItem)
+
+	t.setSelection(len(t.renderSelection) - 1)
 	t.setEditMode()
 }

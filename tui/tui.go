@@ -335,7 +335,7 @@ func getFiles(wd string, extensions []string) []string {
 }
 
 func sortItems(items []*tuido.Item) {
-	sort.Slice(items, func(i, j int) bool {
+	sort.SliceStable(items, func(i, j int) bool {
 		if items[i].Importance() > items[j].Importance() {
 			return true
 		}

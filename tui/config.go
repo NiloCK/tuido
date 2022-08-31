@@ -26,6 +26,13 @@ func (cfg config) String() string {
 		strings.Join(cfg.extensions, ","), cfg.writeto)
 }
 
+// runConfig is the initial, default values for the application configuration.
+//
+// its `writeto` value gets overwritten in `init()` by a golang lookup of,
+// in practice, the same value, but hopefully in a cross-platform safe way.
+//
+// **all** values are overwritten in `loadFromDefaultConfigLocation()` via
+// `init()`, if a configuration file is found in the default location.
 var runConfig config = config{
 	extensions: []string{"xit", "md", "txt"},
 	writeto:    "~/.tuido",

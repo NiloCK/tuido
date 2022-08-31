@@ -108,7 +108,7 @@ func (i *Item) SetStatus(s status) error {
 		// [ ] add #completed=[currentDate] if s == Checked?
 	}
 
-	newRaw := i.scrap() + s.String() + i.Text()
+	newRaw := i.scrap() + s.String() + " " + i.Text()
 
 	err := fileInsert(i.file, i.line, i.raw, newRaw)
 	if err != nil {

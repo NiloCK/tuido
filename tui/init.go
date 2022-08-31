@@ -11,11 +11,11 @@ import (
 func init() {
 	rand.Seed(time.Now().Unix()) // a fresh set of tag colors on each run. Spice of life.
 
-	dir, err := os.UserHomeDir()
+	home, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("error getting user home dir: %s", err)
 	}
-	tuidoDir := filepath.Join(dir, ".tuido")
+	tuidoDir := filepath.Join(home, ".tuido")
 	runConfig.writeto = tuidoDir
 
 	loadFromDefaultConfigLocation()

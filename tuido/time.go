@@ -65,3 +65,43 @@ func toDate(dStr string) time.Time {
 
 	return t
 }
+
+// toDuration parses duration shorthands like
+//  - 16h (16 hours)
+//  - 3d (three days)
+//  - 12w (twelve weeks)
+//  - 2m (two months)
+//  - 1y (one year)
+// into time.Durations structs of that duration.
+//
+// Note, 1m from now will producea different durations
+// depending on the current month
+//
+// [ ] #test #parsing
+func toDuration(dStr string) *time.Duration {
+	num, err := strconv.Atoi(dStr[:len(dStr)-1])
+
+	var d time.Duration
+
+	if err != nil {
+		// fmt.Println("err: ", err)
+		return nil
+	}
+
+	switch dStr[len(dStr)-1] {
+	case 'h':
+		d = time.Hour * time.Duration(num)
+	case 'd':
+		d = time.Hour * time.Duration(24*num)
+	case 'w':
+		d = time.Hour * time.Duration(24*7*num)
+	case 'm':
+		nextM := time.Now().AddDate(0, 1, 0)
+		d = nextM.Sub(time.Now())
+	case 'y':
+		nextY := time.Now().AddDate(1, 0, 0)
+		d = nextY.Sub(time.Now())
+	}
+
+	return &d
+}

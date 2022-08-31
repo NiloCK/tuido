@@ -59,7 +59,7 @@ func (t *tui) setNag(prompt string, size int, exit mode) {
 	t.mode = nag
 }
 
-var fibs map[int]int
+var fibs map[int]int = map[int]int{}
 
 func fib(n int) int {
 	if n <= 0 {
@@ -72,9 +72,7 @@ func fib(n int) int {
 		return 2
 	}
 
-	known, ok := fibs[n]
-
-	if ok {
+	if known, ok := fibs[n]; ok {
 		return known
 	}
 

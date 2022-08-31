@@ -59,6 +59,8 @@ func (t *tui) setNag(prompt string, size int, exit mode) {
 	t.mode = nag
 }
 
+var fibs map[int]int
+
 func fib(n int) int {
 	if n <= 0 {
 		return 0
@@ -70,5 +72,14 @@ func fib(n int) int {
 		return 2
 	}
 
-	return fib(n-1) + fib(n-2)
+	known, ok := fibs[n]
+
+	if ok {
+		return known
+	}
+
+	newOne := fib(n-1) + fib(n-2)
+	fibs[n] = newOne
+
+	return newOne
 }

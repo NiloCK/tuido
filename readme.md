@@ -38,7 +38,19 @@ tuido
 - **[up]**, **[down]**: navigate items
 - **q**: quit
 
-## Configuration
+### Shorthands
+
+`tuido` permits a few shorthands for authoring items with time & date content. Shorthand timespans take the form `NT`, where `N` is some number, and `T` is one of `h`, `d`, `w`, `m`, or `y` (hour, day, week, month, and year). `4d` is four days, `253h` is 253 hours, etc.
+
+An item shorthand is one of `d` (due), `a` (active after), or `r` (recurs every), followed by a shorthand timespan.
+
+Examples:
+
+- `english 1101 comparison paper d2w` will expand into `english 1101 comparison paper #due=YYYY-MM-DD`, with the date appropriately filled in for two weeks from now
+- `call mom r1w` will expand into `call mom #repeat=1w`, which will reschedule itself one week into the future each time it is marked complete.
+- `a1m catch up on stranger things` expands into `#active=YYYY-MM-DD catch up on stranger things`, with the date one month from now. This hides the item from view until the active date - essentially setting yourself a reminder for the future.
+
+### Configuration
 
 Tuido writes new items by default to `$HOME/.tuido/YYYY-MM-DD.xit`. To set a different write location, create file `tuido.conf` in the user config directory (`$HOME/.config` in linux, `$HOME/AppData` in windows). The write location can be a file, which will be appended to, or a directory, which whill recieve datestamped `.xit` files as in the default setting.
 

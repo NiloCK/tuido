@@ -154,6 +154,15 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					t.setSelection(i)
 				}
 			}
+		case "1":
+			current := t.currentSelection()
+			t.currentSelection().Deescalate()
+			t.populateRenderSelection()
+			for i, item := range t.renderSelection {
+				if current == item {
+					t.setSelection(i)
+				}
+			}
 		case "e":
 			t.setEditMode()
 		case "n":

@@ -130,7 +130,7 @@ func (t tui) View() string {
 
 	case help:
 		controls := "\n[press any key to exit help]\n\n"
-		controls += "n: new item\ne: edit item\nz: snooze item\n!: escalate item\np: begin a pomodoro\n\n"
+		controls += "n: new item\ne: edit item\nz: snooze item\n!: escalate item\n1: relax item\np: begin a pomodoro\n\n"
 		controls += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
 		controls += "[tab]: cycle between todo and done tabs\n/: filter todos by tag\n?: enter help\n\n"
 		controls += "q: quit"

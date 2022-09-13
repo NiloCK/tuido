@@ -153,7 +153,7 @@ func (i *Item) Snooze() error {
 }
 
 // Escalate increases the "importance" of an item by prefixing it
-// with an exclamation point
+// with an exclamation point.
 func (i *Item) Escalate() error {
 	txt := i.Text()
 	if len(txt) == 0 {
@@ -165,6 +165,29 @@ func (i *Item) Escalate() error {
 	}
 
 	return i.SetText("! " + txt)
+}
+
+// Deescalate decreases the "importance" of an item by removing
+// a leading exclamation mark.
+//
+// NB: deescalate is not up to [x]it spec wrt items prefixed with
+//     both periods and exclamations, and will fail to deescalate,
+//     eg, "..!!! do this"
+//
+// [ ] make [x]it spec compliant
+// [ ] wants unit tests
+func (i *Item) Deescalate() error {
+	txt := i.Text()
+
+	if strings.HasPrefix(txt, "!!") {
+		return i.SetText(txt[1:])
+	}
+
+	if strings.HasPrefix(txt, "! ") {
+		return i.SetText(txt[2:])
+	}
+
+	return fmt.Errorf("item already has priority 0")
 }
 
 func fib(n int) int {

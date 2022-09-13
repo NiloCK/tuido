@@ -140,6 +140,10 @@ func (i *Item) SetText(t string) error {
 }
 
 func (i *Item) Snooze() error {
+	if i == nil {
+		return fmt.Errorf("item is nil - cannot snooze")
+	}
+
 	count := i.snoozeCount()
 	count++
 

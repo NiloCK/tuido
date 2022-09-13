@@ -32,7 +32,7 @@ tuido
   - **e**: edit item text
   - **p**: enter a pomodoro session for item
   - **z**: snooze this item (set a later active date)
-  - **!**: bump the `importance` modifier on this item
+  - **!**/**1**: bump/decrement the `importance` modifier on this item
 - **[tab]**: switch between pending and done items
 - **/**: filter list by `#tags`
 - **[up]**, **[down]**: navigate items

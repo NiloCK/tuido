@@ -111,8 +111,10 @@ GPL
 - [@] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
 - [ ] #feat #maybe fully respect / implement the [x]it spec
 - [ ] #feat respect .gitignore configs
-- [ ] tag v0.0.1, produce platform builds
+- [x] tag v0.0.1, produce platform builds
 - [ ] add command-line flags for
   - [ ] ignoring current working dir (ie, run only in the write-to directory) `tuido --norecurse`
   - [ ] printing a list to stdout, rather than launching an app. `tuido --print`
   - [ ] viewing and setting config. `tuido --config extensions=xit,md,go,js,ts`
+- [ ] #maybe allow marking items done or obsolete during a pomodoro (closes the pomo)
+- [ ] #maybe mark items [ongoing] when entering a pomo

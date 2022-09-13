@@ -274,7 +274,14 @@ func fileInsert(file string, lineNumber int, expected string, updated string) er
 //
 // String() returns "[x] this one"
 func (i Item) String() string {
-	return i.trimmed()
+	trimmed := i.trimmed()
+
+	// provide vizual for items just snoozed via a keypress.
+	if i.Satus() == Open && !i.Active() {
+		return "[z] " + trimmed[4:]
+	}
+
+	return trimmed
 }
 
 // Text returns the item's body text. EG, for item

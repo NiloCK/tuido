@@ -159,7 +159,6 @@ func (t tui) View() string {
 }
 
 func (t *tui) renderVisibleListedItems(availableHeight int) string {
-	// [ ] needs rendering (somewhere - footer? tab?) of page #
 	renderedItems := t.renderedItemCollection()
 
 	pages := []string{}

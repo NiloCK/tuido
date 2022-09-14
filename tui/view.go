@@ -111,7 +111,7 @@ func (t tui) View() string {
 	case nag:
 		return t.nag.View()
 	case pomo:
-		ret := t.renderedItemCollection()[t.selection] + "\n\n"
+		ret := t.renderedItemCollection(t.w)[t.selection] + "\n\n"
 		if t.pomoClock > 0 {
 			if t.pomoClock > 60 {
 				ret += fmt.Sprint(t.pomoClock / 60)
@@ -150,7 +150,7 @@ func (t tui) View() string {
 
 		availableHeight := t.h - (lg.Height(header) + lg.Height(footer))
 
-		body := t.renderVisibleListedItems(availableHeight)
+		body := t.renderVisibleListedItems(availableHeight, t.w)
 
 		// recalculate footer because pages data was set during body render
 		rows = append(rows, header, body, t.footer())
@@ -158,8 +158,8 @@ func (t tui) View() string {
 	}
 }
 
-func (t *tui) renderVisibleListedItems(availableHeight int) string {
-	renderedItems := t.renderedItemCollection()
+func (t *tui) renderVisibleListedItems(height, width int) string {
+	renderedItems := t.renderedItemCollection(width)
 
 	pages := []string{}
 	newPage := ""
@@ -174,7 +174,7 @@ func (t *tui) renderVisibleListedItems(availableHeight int) string {
 				renderedItem,
 			)
 		}
-		if lg.Height(added) <= availableHeight {
+		if lg.Height(added) <= height {
 			newPage = added
 		} else {
 			pages = append(pages, newPage)
@@ -186,21 +186,21 @@ func (t *tui) renderVisibleListedItems(availableHeight int) string {
 	}
 
 	t.pages = len(pages)
-	t.currentPage = t.selection / availableHeight
+	t.currentPage = t.selection / height
 
 	renderedList := pages[t.currentPage]
 
-	gap := availableHeight - lg.Height(renderedList)
+	gap := height - lg.Height(renderedList)
 	for i := 0; i < gap; i++ {
 		renderedList += "\n"
 	}
 
-	return lg.NewStyle().MaxHeight(availableHeight).Render(
+	return lg.NewStyle().MaxHeight(height).Render(
 		renderedList,
 	)
 }
 
-func (t tui) renderedItemCollection() []string {
+func (t tui) renderedItemCollection(width int) []string {
 	// [ ] `selected` style does not apply past the first tag
 	selected := lg.NewStyle().Bold(true)
 
@@ -209,29 +209,38 @@ func (t tui) renderedItemCollection() []string {
 	for i, item := range t.renderSelection {
 		renderedItem := ""
 		if i == t.selection {
-			renderedItem += "> "
+			cursor := "> "
 			if t.mode == edit {
-				renderedItem += selected.Render(t.itemEditor.View())
+				renderedItem = lg.JoinHorizontal(lg.Top, cursor, selected.Render(t.itemEditor.View()))
 			} else {
-				renderedItem += selected.Render(t.renderTuido(*item))
+				renderedItem = lg.JoinHorizontal(lg.Top, cursor, selected.Render(t.renderTuido(*item, width)))
 			}
 
 		} else {
-			renderedItem += "  "
-			renderedItem += t.renderTuido(*item)
+			leadingSpace := "  "
+			renderedItem = lg.JoinHorizontal(lg.Top, leadingSpace, t.renderTuido(*item, width))
 		}
 		renderedItems = append(renderedItems, renderedItem)
 	}
 	return renderedItems
 }
 
-// renderTuido applies tagColor to the items tags and returns the text
-func (t tui) renderTuido(item tuido.Item) string {
+// renderTuido applies tagColor to the items tags, splits long items
+// over multiple lines, and returns the text
+func (t tui) renderTuido(item tuido.Item, width int) string {
 	ret := item.String()
 	tags := item.Tags()
 
 	for _, tag := range tags {
 		ret = strings.ReplaceAll(ret, "#"+tag.String(), t.tagColors[tag.Name()].Render("#"+tag.String()))
+	}
+
+	// +2 here because of the leading 'cursor' space
+	if len(ret)+2 > width {
+		rowsRequired := (len(ret) - 4) / (width - 6) // -6 here instead of 4 because of the cursor spaces
+		bodyStyle := lg.NewStyle().Height(rowsRequired)
+
+		ret = lg.JoinHorizontal(lg.Top, bodyStyle.Width(4).Render(ret[:4]), bodyStyle.Width(width-6).Render(ret[4:]))
 	}
 
 	return ret

@@ -104,9 +104,6 @@ GPL
 - [@] #ui sort items by priority [x], age [ ], or due #dates [x]
 - [ ] #feat #ui provide details / context (preview into source file) on current selected item, or quick open of an item's source location
 - [ ] #feat allow plain-text fuzzy text search/filter of item body text (only tag names currently)
-- [@] #feat specify / parse a format for recurring items (call mom, eat a salad)
-  - [x] #repeat=durationShorthand is active
-  - [@] need to mark open + postpone + set new due date on `x` done markers
 - [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui #maybe
 - [@] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
 - [ ] #feat #maybe fully respect / implement the [x]it spec

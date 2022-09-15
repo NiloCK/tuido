@@ -97,8 +97,12 @@ func (i *Item) SetStatus(s status) error {
 		repeat := i.Repeat()
 		if repeat != nil {
 			i.setTag(Tag{
-				name:  "due",
+				name:  "active",
 				value: time.Now().Add(*repeat).Format("2006-01-02"),
+			})
+			i.setTag(Tag{
+				name:  "lastDone",
+				value: time.Now().Format("2006-01-02"),
 			})
 
 			// prevent fall-through - we no longer want this to be

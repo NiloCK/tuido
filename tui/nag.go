@@ -8,6 +8,11 @@ import (
 )
 
 func NewNag(prompt string, size int, exit mode) nagScreen {
+	// this is annoying enough
+	if size > 9 {
+		size = 9
+	}
+
 	nagLength := fib(size)
 	nagText := ""
 

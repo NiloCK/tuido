@@ -159,7 +159,7 @@ func (t tui) View() string {
 }
 
 func (t *tui) renderVisibleListedItems(height, width int) string {
-	renderedItems := t.renderedItemCollection(width)
+	renderedItems := t.renderedItemCollection(width - 1) // providing a margin
 
 	pages := []string{}
 

@@ -162,31 +162,38 @@ func (t *tui) renderVisibleListedItems(height, width int) string {
 	renderedItems := t.renderedItemCollection(width)
 
 	pages := []string{}
-	newPage := ""
 
-	for _, renderedItem := range renderedItems {
-		added := ""
-		if newPage == "" {
-			added = renderedItem // do not vertically stack the empty page w/ the renderedItem
+	pageUnderConstruction := ""
+
+	for i, renderedItem := range renderedItems {
+		pagePlusNextItem := ""
+
+		if pageUnderConstruction == "" {
+			pagePlusNextItem = renderedItem // do not vertically stack the empty page w/ the renderedItem
 		} else {
-			added = lg.JoinVertical(lg.Left,
-				newPage,
+			pagePlusNextItem = lg.JoinVertical(lg.Left,
+				pageUnderConstruction,
 				renderedItem,
 			)
 		}
-		if lg.Height(added) <= height {
-			newPage = added
+
+		if lg.Height(pagePlusNextItem) <= height {
+			pageUnderConstruction = pagePlusNextItem
 		} else {
-			pages = append(pages, newPage)
-			newPage = renderedItem
+			pages = append(pages, pageUnderConstruction)
+			pageUnderConstruction = renderedItem
+		}
+
+		if i == t.selection {
+			t.currentPage = len(pages)
 		}
 	}
-	if len(pages) == 0 || len(newPage) != 0 {
-		pages = append(pages, newPage)
+
+	if len(pages) == 0 || len(pageUnderConstruction) != 0 {
+		pages = append(pages, pageUnderConstruction)
 	}
 
 	t.pages = len(pages)
-	t.currentPage = t.selection / height
 
 	renderedList := pages[t.currentPage]
 

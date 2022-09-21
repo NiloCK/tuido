@@ -15,7 +15,7 @@ var rex regexp.Regexp = *regexp.MustCompile("[r,e,a,d][0-9]+[h,d,w,m,y]")
 func repl(s string) string {
 	ret := ""
 
-	// these
+	// returned directly, w/ shorthand durations
 	switch s[0] {
 	case 'r':
 		return "#repeat=" + s[1:]
@@ -23,7 +23,7 @@ func repl(s string) string {
 		return "#estimate=" + s[1:]
 	}
 
-	//
+	// durations converted to dates, then returned
 	switch s[0] {
 	case 'd':
 		ret += "#due="

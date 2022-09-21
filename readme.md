@@ -40,15 +40,23 @@ tuido
 
 ### Shorthands
 
-`tuido` permits a few shorthands for authoring items with time & date content. Shorthand timespans take the form `NT`, where `N` is some number, and `T` is one of `h`, `d`, `w`, `m`, or `y` (hour, day, week, month, and year). `4d` is four days, `253h` is 253 hours, etc.
+`tuido` permits some shorthands for authoring items with time & date content. Shorthand timespans take the form `NT`, where `N` is some number, and `T` is one of `m`, `h`, `d`, `w`, `M`, or `y` (minute, hour, day, week, month, and year). `4d` is four days, `253h` is 253 hours, etc.
 
-An item shorthand is one of `d` (due), `a` (active after), or `r` (recurs every), followed by a shorthand timespan.
+An item shorthand is one of:
+
+- `d` (due)
+- `a` (active after)
+- `r` (recurs every)
+- `e` (estimate)
+
+followed by a shorthand timespan.
 
 Examples:
 
 - `english 1101 comparison paper d2w` will expand into `english 1101 comparison paper #due=YYYY-MM-DD`, with the date appropriately filled in for two weeks from now
 - `call mom r1w` will expand into `call mom #repeat=1w`, which will reschedule itself one week into the future each time it is marked complete.
 - `a1m catch up on stranger things` expands into `#active=YYYY-MM-DD catch up on stranger things`, with the date one month from now. This hides the item from view until the active date - essentially setting yourself a reminder for the future.
+- `fix the sink e2h` expands into `fix the sink #estimate=2h`
 
 ### Configuration
 
@@ -115,3 +123,5 @@ GPL
   - [ ] viewing and setting config. `tuido --config extensions=xit,md,go,js,ts`
 - [ ] #maybe allow marking items done or obsolete during a pomodoro (closes the pomo)
 - [ ] #maybe mark items [ongoing] when entering a pomo
+- [ ] #maybe add a #spent=timespan tag which gets updated on pomo exits & by shorthand
+  - [ ] generate reports on #estimate=x vs #spent=y, categorizing by tag, etc

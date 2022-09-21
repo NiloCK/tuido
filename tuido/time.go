@@ -10,14 +10,21 @@ func expandDateShorthands(s string) string {
 	return rex.ReplaceAllStringFunc(s, repl)
 }
 
-var rex regexp.Regexp = *regexp.MustCompile("[r,o,d][0-9]+[h,d,w,m,y]")
+var rex regexp.Regexp = *regexp.MustCompile("[r,e,a,d][0-9]+[h,d,w,m,y]")
 
 func repl(s string) string {
 	ret := ""
 
+	// these
 	switch s[0] {
 	case 'r':
 		return "#repeat=" + s[1:]
+	case 'e':
+		return "#estimate=" + s[1:]
+	}
+
+	//
+	switch s[0] {
 	case 'd':
 		ret += "#due="
 	case 'a':
@@ -51,13 +58,15 @@ func toDate(dStr string) time.Time {
 	}
 
 	switch dStr[len(dStr)-1] {
+	case 'm':
+		t = t.Add(time.Minute * time.Duration(num))
 	case 'h':
 		t = t.Add(time.Hour * time.Duration(num))
 	case 'd':
 		t = t.AddDate(0, 0, num)
 	case 'w':
 		t = t.AddDate(0, 0, num*7)
-	case 'm':
+	case 'M':
 		t = t.AddDate(0, num, 0)
 	case 'y':
 		t = t.AddDate(num, 0, 0)

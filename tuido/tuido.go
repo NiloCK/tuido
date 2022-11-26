@@ -2,12 +2,19 @@ package tuido
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/alecthomas/chroma/v2/lexers"
+	"github.com/alecthomas/chroma/v2/quick"
+	"github.com/charmbracelet/lipgloss"
+	"github.com/nilock/tuido/utils"
 )
 
 type status string
@@ -141,6 +148,41 @@ func (i *Item) SetText(t string) error {
 	}
 	i.raw = newRaw
 	return nil
+}
+
+// GetContext reads and returns some surrounding text from the item's source file.
+//
+// The returned integer is the line number of the item's text inside the returned context.
+func (i *Item) GetContext(height int) (string, int) {
+	fileBytes, err := exec.Command("cat", i.file).CombinedOutput()
+
+	if err != nil {
+		return err.Error(), 0
+	}
+
+	// colorize the file contents
+	buf := new(bytes.Buffer)
+	quick.Highlight(buf, string(fileBytes), lexers.Match(i.file).Config().Name, utils.GetTerminalColorSupport(), "monokai")
+
+	lines := strings.Split(string(buf.Bytes()), "\n")
+	lines = append([]string{""}, lines...)
+
+	first := i.line - (height / 2) + 1
+	if first < 0 {
+		first = 0
+	}
+	last := i.line + (height / 2) - 1
+	if last > len(lines)-1 {
+		last = len(lines) - 1
+	}
+
+	preItemLines := strings.Join(lines[first:i.line], "\n")
+	item := lines[i.line]
+	postItemLines := strings.Join(lines[i.line+1:last], "\n")
+
+	item = lipgloss.NewStyle().Bold(true).Italic(true).Render(item) // not working - clobbered by styles from chroma
+
+	return preItemLines + "\n" + item + "\n" + postItemLines, i.line - first
 }
 
 func (i *Item) Snooze() error {

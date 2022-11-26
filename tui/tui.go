@@ -126,6 +126,7 @@ const (
 	help
 	pomo
 	nag
+	peek
 )
 
 type tui struct {
@@ -148,7 +149,8 @@ type tui struct {
 	pomoTimer  time.Ticker
 	pomoClock  int
 
-	nag nagScreen
+	nag  nagScreen
+	peek peekScreen
 
 	tagColors map[string]lg.Style
 
@@ -196,6 +198,12 @@ func (t *tui) startPomo() {
 		fmt.Println(err)
 		return
 	}
+}
+
+func (t *tui) setPeekMode() tea.Cmd {
+	t.mode = peek
+	t.peek = peekScreen{*t.currentSelection()}
+	return nil
 }
 
 func (t *tui) setEditMode() tea.Cmd {

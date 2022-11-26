@@ -36,6 +36,27 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if t.mode == peek {
+		switch msg := msg.(type) {
+		case tea.KeyMsg:
+			key := msg.Type
+
+			if key == tea.KeyEsc ||
+				key == tea.KeyEnter {
+				t.mode = navigation
+				return t, nil
+			}
+
+			if key == tea.KeyUp {
+				// scroll up
+			}
+
+			if key == tea.KeyDown {
+				// scroll down
+			}
+		}
+	}
+
 	if t.mode == pomo {
 		if t.pomoClock > 0 {
 			return t, nil // no msg processing other than the timer during a running clock
@@ -169,6 +190,8 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.tryCreateNewItem()
 		case "z":
 			t.currentSelection().Snooze()
+		case "enter":
+			t.setPeekMode()
 		case "q":
 			return t, tea.Quit
 		}

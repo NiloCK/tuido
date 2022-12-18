@@ -6,11 +6,19 @@ import (
 	"time"
 )
 
+// expandDateShorthands takes an input string (a user supplied tuido)
+// and expands its date shorthads via a regex matcher.
+//
+// Expansion Examples:
+//  - "r1w" -> "#repeat=1w" (repeat weekly)
+//  - "a5w" -> "#active=[datestring for 5 weeks from now]" (hide until 5 weeks)
+//  - "e25m" -> "#estimate=25m" (estimate 25 minutes task time)
+//  - "d7d" -> "#due=[datestring for 7 days from now]" (set a due date)
 func expandDateShorthands(s string) string {
 	return rex.ReplaceAllStringFunc(s, repl)
 }
 
-var rex regexp.Regexp = *regexp.MustCompile("[r,e,a,d][0-9]+[h,d,w,m,y]")
+var rex regexp.Regexp = *regexp.MustCompile("[r,e,a,d][0-9]+[h,d,w,m,y,M]")
 
 func repl(s string) string {
 	ret := ""
@@ -38,10 +46,10 @@ func repl(s string) string {
 }
 
 // toDate parses duration shorthands like
+//  - 2m (two minutes)
 //  - 16h (16 hours)
 //  - 3d (three days)
 //  - 12w (twelve weeks)
-//  - 2m (two months)
 //  - 1y (one year)
 // into time.Time structs that far from now.
 //

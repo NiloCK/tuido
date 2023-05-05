@@ -69,11 +69,21 @@ func (t tui) footer() string {
 	itemStr := footStyle.Render(itemLoc)
 
 	var right string
-	if t.mode == navigation {
-		right = footStyle.Render(t.pagination())
-	} else if t.mode == edit {
-		right = footStyle.Copy().Faint(true).
-			Render("[enter] - Save Changes,  [esc] - Discard Changes")
+
+	if t.err != nil {
+		right = lipgloss.
+			NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#ff2222")).
+			Render(t.err.Error())
+	} else {
+
+		if t.mode == navigation {
+			right = footStyle.Render(t.pagination())
+		} else if t.mode == edit {
+			right = footStyle.Copy().Faint(true).
+				Render("[enter] - Save Changes,  [esc] - Discard Changes")
+		}
 	}
 
 	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, itemStr, right))-5)

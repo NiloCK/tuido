@@ -77,6 +77,7 @@ func newTUI(items []*tuido.Item, cfg config) tui {
 
 	return tui{
 		config:          cfg,
+		err:             nil,
 		items:           items,
 		renderSelection: nil,
 		itemsFilter:     todo,
@@ -130,6 +131,7 @@ const (
 
 type tui struct {
 	config config
+	err    error
 
 	items       []*tuido.Item
 	itemsFilter itemType

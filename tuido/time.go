@@ -83,7 +83,7 @@ func toDate(dStr string) time.Time {
 	return t
 }
 
-// toDuration parses duration shorthands like
+// ToDuration parses duration shorthands like
 //  - 16h (16 hours)
 //  - 3d (three days)
 //  - 12w (twelve weeks)
@@ -95,7 +95,7 @@ func toDate(dStr string) time.Time {
 // depending on the current month
 //
 // [ ] #test #parsing
-func toDuration(dStr string) *time.Duration {
+func ToDuration(dStr string) *time.Duration {
 	num, err := strconv.Atoi(dStr[:len(dStr)-1])
 
 	var d time.Duration

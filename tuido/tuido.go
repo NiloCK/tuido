@@ -507,14 +507,25 @@ func (t Tag) String() string {
 	return t.name
 }
 
+// newTag splits a string token "#name=value" into a Tag struct.
 func newTag(s string) Tag {
+	println(s)
 	split := strings.Split(s, "=")
-	if len(split) == 2 {
+	for _, s := range split {
+		println(s)
+	}
+	name := split[0]
+
+	// recombine other split parts into value
+	value := strings.Join(split[1:], "=")
+
+	if len(split) >= 2 {
 		return Tag{
-			name:  split[0],
-			value: split[1],
+			name:  name,
+			value: value,
 		}
 	}
+
 	return Tag{
 		name: s,
 	}

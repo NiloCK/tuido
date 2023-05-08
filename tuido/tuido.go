@@ -509,7 +509,10 @@ func (t Tag) String() string {
 
 // newTag splits a string token "#name=value" into a Tag struct.
 func newTag(s string) Tag {
-	println(s)
+	if strings.HasPrefix(s, "#") && len(s) > 1 {
+		s = s[1:]
+	}
+
 	split := strings.Split(s, "=")
 	for _, s := range split {
 		println(s)

@@ -53,6 +53,10 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				str == "8" ||
 				str == "9" ||
 				str == "0" ||
+				str == "." ||
+				str == "left" ||
+				str == "right" ||
+				str == "delete" ||
 				str == "backspace" {
 				var cmd tea.Cmd
 				t.pomoEditor, cmd = t.pomoEditor.Update(msg)

@@ -191,12 +191,12 @@ func (t *tui) startPomo() {
 	}
 
 	var err error
-	t.pomoClock, err = strconv.Atoi(t.pomoEditor.Value())
-	t.pomoClock *= 60
+	setTime, err := strconv.ParseFloat(t.pomoEditor.Value(), 64)
+	t.pomoTimeRemaining = int(setTime * 60)
 
 	if err != nil {
+		t.err = err
 		fmt.Println(err)
-		return
 	}
 }
 

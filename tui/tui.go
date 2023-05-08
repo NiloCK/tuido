@@ -146,9 +146,14 @@ type tui struct {
 	filter     textinput.Model
 	itemEditor textinput.Model
 
+	// pomoEditor is the textinput.Model for the pomo clock
 	pomoEditor textinput.Model
-	pomoTimer  time.Ticker
-	pomoClock  int
+	// pomoTimer is the ticker that decrements the pomo clock
+	pomoTimer time.Ticker
+	// pomoTimeRemaining is the time remaining in seconds
+	pomoTimeRemaining int
+	// pomoTimeSet is the original time set by the user
+	pomoTimeSet int
 
 	nag nagScreen
 
@@ -193,6 +198,7 @@ func (t *tui) startPomo() {
 	var err error
 	setTime, err := strconv.ParseFloat(t.pomoEditor.Value(), 64)
 	t.pomoTimeRemaining = int(setTime * 60)
+	t.pomoTimeSet = t.pomoTimeRemaining
 
 	if err != nil {
 		t.err = err

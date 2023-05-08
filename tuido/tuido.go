@@ -123,6 +123,33 @@ func (i *Item) SetStatus(s status) error {
 	return nil
 }
 
+func (i *Item) IncrementTimeSpent(seconds int) {
+	if i == nil {
+		return
+	}
+	previouslySpent := 0.0
+
+	for _, t := range i.Tags() {
+		if t.name == "spent" {
+			var err error
+
+			previouslySpent, err = strconv.ParseFloat(t.value, 64)
+			if err != nil {
+				return
+			}
+			break
+		}
+	}
+	asMinutes := float64(seconds) / 60
+
+	asStr := fmt.Sprintf("%.2f", previouslySpent+asMinutes)
+
+	i.setTag(Tag{
+		name:  "spent",
+		value: asStr,
+	})
+}
+
 // SetText writes the updated text to the item's file
 // on disk and updates the text of the in-memory item.
 //
@@ -223,6 +250,7 @@ func (i *Item) snoozeCount() int {
 	return 0
 }
 
+// setTag replaces the value of an existing tag, or appends a new tag.
 func (i *Item) setTag(t Tag) error {
 	// replace existing value, if exists
 	for _, tag := range i.Tags() {
@@ -355,7 +383,7 @@ func (i Item) Created() *time.Time {
 func (i Item) Repeat() *time.Duration {
 	for _, t := range i.Tags() {
 		if t.name == "repeat" {
-			return toDuration(t.value)
+			return ToDuration(t.value)
 		}
 	}
 
@@ -435,7 +463,7 @@ func New(
 	line int,
 	raw string,
 ) Item {
-	// [ ] !!!!!!! replace this magic # w/ better named ctors
+	// [ ] !!!!!!! replace this magic # w/ better named ctors #estimate=2h #spent=0.35
 	if line < 0 { // this is a new item authored in-tui
 		newItemRaw := "[ ] "
 
@@ -514,9 +542,6 @@ func newTag(s string) Tag {
 	}
 
 	split := strings.Split(s, "=")
-	for _, s := range split {
-		println(s)
-	}
 	name := split[0]
 
 	// recombine other split parts into value

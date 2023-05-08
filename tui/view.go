@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	lg "github.com/charmbracelet/lipgloss"
 	"github.com/nilock/tuido/tuido"
 )
@@ -122,11 +123,11 @@ func (t tui) View() string {
 		return t.nag.View()
 	case pomo:
 		ret := t.renderedItemCollection(t.w)[t.selection] + "\n\n"
-		if t.pomoClock > 0 {
-			if t.pomoClock > 60 {
-				ret += fmt.Sprint(t.pomoClock / 60)
+		if t.pomoTimeRemaining > 0 {
+			if t.pomoTimeRemaining > 60 {
+				ret += fmt.Sprint(t.pomoTimeRemaining / 60)
 			} else {
-				ret += fmt.Sprint(t.pomoClock)
+				ret += fmt.Sprint(t.pomoTimeRemaining)
 			}
 		} else {
 			ret += t.pomoEditor.View()

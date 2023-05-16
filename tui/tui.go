@@ -127,6 +127,7 @@ const (
 	help
 	pomo
 	nag
+	peek
 )
 
 type tui struct {
@@ -155,7 +156,8 @@ type tui struct {
 	// pomoTimeSet is the original time set by the user
 	pomoTimeSet int
 
-	nag nagScreen
+	nag  nagScreen
+	peek peekScreen
 
 	tagColors map[string]lg.Style
 
@@ -204,6 +206,12 @@ func (t *tui) startPomo() {
 		t.err = err
 		fmt.Println(err)
 	}
+}
+
+func (t *tui) setPeekMode() tea.Cmd {
+	t.mode = peek
+	t.peek = peekScreen{*t.currentSelection()}
+	return nil
 }
 
 func (t *tui) setEditMode() tea.Cmd {

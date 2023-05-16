@@ -103,6 +103,7 @@ GPL
 
 ## Roadmap
 
+- [ ] #feat allow for copying current item to clipboard (via `ctrl-C?`)
 - [ ] #feat make new-items repsect the filetype being written to (leading comment slashes for code files, leading bullet for readme, etc)
 - [@] process #dates
   - [x] from items themselves

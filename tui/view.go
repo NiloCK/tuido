@@ -84,7 +84,9 @@ func (t tui) footer() string {
 		} else if t.mode == edit {
 			right = footStyle.Copy().Faint(true).
 				Render("[enter] - Save Changes,  [esc] - Discard Changes")
-		}
+		} else if t.mode == peek {
+		  right = footStyle.Copy().Faint(true).Render("[esc] - Return to list view")
+    }
 	}
 
 	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, itemStr, right))-5)
@@ -149,6 +151,8 @@ func (t tui) View() string {
 		txt := lg.NewStyle().Width(28).Align(lg.Left).
 			Render("\n\n\ntuido reads txt, md, and xit files from the working directory and locates xit style todo items, allowing for quick navigation and discovery.\n\nUpdating an item's status in tuido writes the corresponding change to disk.")
 		return lg.JoinHorizontal(lg.Top, "  ", controls, "    ", txt)
+	case peek:
+		return t.peek.View(t.h, t.w, t.footer)
 	default:
 		if len(t.renderSelection) == 0 { // init population
 			t.populateRenderSelection()

@@ -6,7 +6,7 @@ An opinionated terminal interface for efficient browsing and management of [[x]i
 - [x] compactly displays pending todos and offers navigation between `todo` and `done`
 - [x] allows for creating new items, updating existing items, and persists updates to disk
 - [x] allows for filtering via `tags`
-- [x] a simple pomodoro mode for timeboxed focus on individual items
+- [x] one-button (`p`) pomodoro mode for timeboxed focus on individual items; tracks overall time spend
 - [x] one-button (`z`) progressive snooze parks items for 1,2,3,5,8,... days
 - [x] progressive deterrence for adding new items
 
@@ -95,7 +95,7 @@ tuido is dogfooding. The project's `.tuido` file:
 - instructs tuido to parse items in `.go` files as well as the defaults.
 - instructs tuido to write new items directly to this readme
 
-Result being that the app, runnng in test, contains a good running list of development todos & a convenient method to append to the roadmap.
+Result being that the app, running in test, contains a good running list of development todos & a convenient method to append to the roadmap.
 
 ## Licence
 
@@ -123,5 +123,5 @@ GPL
   - [ ] viewing and setting config. `tuido --config extensions=xit,md,go,js,ts`
 - [ ] #maybe allow marking items done or obsolete during a pomodoro (closes the pomo)
 - [ ] #maybe mark items [ongoing] when entering a pomo
-- [ ] #maybe add a #spent=timespan tag which gets updated on pomo exits & by shorthand
-  - [ ] generate reports on #estimate=x vs #spent=y, categorizing by tag, etc
+- [x] #maybe add a #spent=timespan tag which gets updated on pomo exits & by shorthand
+  - [ ] #maybe generate reports on #estimate=x vs #spent=y, categorizing by tag, etc

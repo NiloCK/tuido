@@ -10,12 +10,15 @@ import (
 func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// [ ] refactor as separate methods per mode
 	if _, ok := msg.(tickMsg); ok {
-		t.pomoClock--
-		if t.pomoClock == 1 {
+		t.pomoTimeRemaining--
+		if t.pomoTimeRemaining == 1 {
+			// pomo is done. Increment time spent:
+			t.currentSelection().IncrementTimeSpent(t.pomoTimeSet)
+			// ...  & switch to nav mode
 			t.mode = navigation
 		}
-		if t.pomoClock < 0 {
-			t.pomoClock = 0
+		if t.pomoTimeRemaining < 0 {
+			t.pomoTimeRemaining = 0
 		}
 		return t, tick()
 	}
@@ -58,7 +61,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if t.mode == pomo {
-		if t.pomoClock > 0 {
+		if t.pomoTimeRemaining > 0 {
 			return t, nil // no msg processing other than the timer during a running clock
 		}
 		switch msg := msg.(type) {
@@ -74,6 +77,10 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				str == "8" ||
 				str == "9" ||
 				str == "0" ||
+				str == "." ||
+				str == "left" ||
+				str == "right" ||
+				str == "delete" ||
 				str == "backspace" {
 				var cmd tea.Cmd
 				t.pomoEditor, cmd = t.pomoEditor.Update(msg)

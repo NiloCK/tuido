@@ -130,6 +130,33 @@ func (i *Item) SetStatus(s status) error {
 	return nil
 }
 
+func (i *Item) IncrementTimeSpent(seconds int) {
+	if i == nil {
+		return
+	}
+	previouslySpent := 0.0
+
+	for _, t := range i.Tags() {
+		if t.name == "spent" {
+			var err error
+
+			previouslySpent, err = strconv.ParseFloat(t.value, 64)
+			if err != nil {
+				return
+			}
+			break
+		}
+	}
+	asMinutes := float64(seconds) / 60
+
+	asStr := fmt.Sprintf("%.2f", previouslySpent+asMinutes)
+
+	i.setTag(Tag{
+		name:  "spent",
+		value: asStr,
+	})
+}
+
 // SetText writes the updated text to the item's file
 // on disk and updates the text of the in-memory item.
 //
@@ -265,6 +292,7 @@ func (i *Item) snoozeCount() int {
 	return 0
 }
 
+// setTag replaces the value of an existing tag, or appends a new tag.
 func (i *Item) setTag(t Tag) error {
 	// replace existing value, if exists
 	for _, tag := range i.Tags() {
@@ -397,7 +425,7 @@ func (i Item) Created() *time.Time {
 func (i Item) Repeat() *time.Duration {
 	for _, t := range i.Tags() {
 		if t.name == "repeat" {
-			return toDuration(t.value)
+			return ToDuration(t.value)
 		}
 	}
 
@@ -549,14 +577,25 @@ func (t Tag) String() string {
 	return t.name
 }
 
+// newTag splits a string token "#name=value" into a Tag struct.
 func newTag(s string) Tag {
+	if strings.HasPrefix(s, "#") && len(s) > 1 {
+		s = s[1:]
+	}
+
 	split := strings.Split(s, "=")
-	if len(split) == 2 {
+	name := split[0]
+
+	// recombine other split parts into value
+	value := strings.Join(split[1:], "=")
+
+	if len(split) >= 2 {
 		return Tag{
-			name:  split[0],
-			value: split[1],
+			name:  name,
+			value: value,
 		}
 	}
+
 	return Tag{
 		name: s,
 	}

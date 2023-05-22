@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	lg "github.com/charmbracelet/lipgloss"
 	"github.com/nilock/tuido/tuido"
 )
@@ -69,13 +70,23 @@ func (t tui) footer() string {
 	itemStr := footStyle.Render(itemLoc)
 
 	var right string
-	if t.mode == navigation {
-		right = footStyle.Render(t.pagination())
-	} else if t.mode == edit {
-		right = footStyle.Copy().Faint(true).
-			Render("[enter] - Save Changes,  [esc] - Discard Changes")
-	} else if t.mode == peek {
-		right = footStyle.Copy().Faint(true).Render("[esc] - Return to list view")
+
+	if t.err != nil {
+		right = lipgloss.
+			NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("#ff2222")).
+			Render(t.err.Error())
+	} else {
+
+		if t.mode == navigation {
+			right = footStyle.Render(t.pagination())
+		} else if t.mode == edit {
+			right = footStyle.Copy().Faint(true).
+				Render("[enter] - Save Changes,  [esc] - Discard Changes")
+		} else if t.mode == peek {
+		  right = footStyle.Copy().Faint(true).Render("[esc] - Return to list view")
+    }
 	}
 
 	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, itemStr, right))-5)
@@ -114,11 +125,11 @@ func (t tui) View() string {
 		return t.nag.View()
 	case pomo:
 		ret := t.renderedItemCollection(t.w)[t.selection] + "\n\n"
-		if t.pomoClock > 0 {
-			if t.pomoClock > 60 {
-				ret += fmt.Sprint(t.pomoClock / 60)
+		if t.pomoTimeRemaining > 0 {
+			if t.pomoTimeRemaining > 60 {
+				ret += fmt.Sprint(t.pomoTimeRemaining / 60)
 			} else {
-				ret += fmt.Sprint(t.pomoClock)
+				ret += fmt.Sprint(t.pomoTimeRemaining)
 			}
 		} else {
 			ret += t.pomoEditor.View()

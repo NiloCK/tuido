@@ -505,7 +505,7 @@ func New(
 	line int,
 	raw string,
 ) Item {
-	// [ ] !!!!!!! replace this magic # w/ better named ctors #estimate=2h #spent=0.35
+	// [ ] !!!!!!! replace this magic # w/ better named ctors
 	if line < 0 { // this is a new item authored in-tui
 		newItemRaw := "[ ] "
 

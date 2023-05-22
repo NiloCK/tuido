@@ -199,8 +199,8 @@ func (t *tui) startPomo() {
 
 	var err error
 	setTime, err := strconv.ParseFloat(t.pomoEditor.Value(), 64)
-	t.pomoTimeRemaining = int(setTime * 60)
-	t.pomoTimeSet = t.pomoTimeRemaining
+	t.pomoTimeSet = int(setTime * 60)
+	t.pomoTimeRemaining = t.pomoTimeSet
 
 	if err != nil {
 		t.err = err

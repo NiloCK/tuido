@@ -56,3 +56,6 @@ Down
 Type "s"
 Down
 Type "a"
+Down
+Type "z"
+Down

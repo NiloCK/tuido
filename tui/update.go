@@ -58,6 +58,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// scroll down
 			}
 		}
+		return t, nil
 	}
 
 	if t.mode == pomo {
@@ -95,6 +96,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				t.mode = navigation
 			}
 		}
+		return t, nil
 	}
 
 	if t.mode == edit {

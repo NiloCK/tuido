@@ -58,6 +58,14 @@ Examples:
 - `a1m catch up on stranger things` expands into `#active=YYYY-MM-DD catch up on stranger things`, with the date one month from now. This hides the item from view until the active date - essentially setting yourself a reminder for the future.
 - `fix the sink e2h` expands into `fix the sink #estimate=2h`
 
+### Sorting
+
+The sorting works like this:
+
+- sort by how important items are (the number of leading !s)
+- sort by the specified due dates, if any due date is present (eg, with the #due= tag)
+- alphabetical
+
 ### Configuration
 
 Tuido writes new items by default to `$HOME/.tuido/YYYY-MM-DD.xit`. To set a different write location, create file `tuido.conf` in the user config directory (`$HOME/.config` in linux, `$HOME/AppData` in windows). The write location can be a file, which will be appended to, or a directory, which whill recieve datestamped `.xit` files as in the default setting.

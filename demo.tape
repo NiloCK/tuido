@@ -75,15 +75,17 @@ Type "./td"
 Sleep 500ms
 Enter
 
+
 Sleep 2
 
-Down 3
+Down@0.5 3
 Up 1
-Down 5
+Down@0.25 5
 Tab@2s 2 # show done, back to todo
 
 # filtering
 Type "/"
+Sleep 1s
 Type "#feat"
 Down
 Up
@@ -94,6 +96,7 @@ Type "/"
 
 # clear the filter
 Backspace 5
+Escape
 
 # show a pomodoro (currently broken! launching pomo also launches peek - does not capture 'enter')
 

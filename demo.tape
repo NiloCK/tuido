@@ -68,6 +68,8 @@ Set BorderRadius 10
 Hide
 Type "go build -o td ."
 Enter
+Type "clear"
+Enter
 Show
 #/setup#
 

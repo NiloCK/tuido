@@ -60,11 +60,11 @@ Examples:
 
 ### Sorting
 
-The sorting works like this:
+Displayed items are sorted like this:
 
-- sort by how important items are (the number of leading !s)
-- sort by the specified due dates, if any due date is present (eg, with the #due= tag)
-- alphabetical
+1. sort by how important items are (the number of leading !s). Adjust an item's importance with `!` and `1`.
+2. sort by the specified due dates, if any due date is present (eg, with the #due= tag)
+3. sort alphabetically
 
 ### Configuration
 

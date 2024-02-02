@@ -20,16 +20,16 @@ import (
 )
 
 func Run() {
-	wdStr, err := os.Getwd() // [ ] only from cli flag? YES! or... follow .gitignore
+	wrkdirStr, err := os.Getwd() // [ ] only from cli flag? YES! or... follow .gitignore
 
 	if err != nil {
 		panic(err)
 	}
 
-	adoptConfigSettings(filepath.Join(wdStr, ".tuido"))
+	adoptConfigSettings(filepath.Join(wrkdirStr, ".tuido"))
 	// [ ] read cli flags for added extensions / extension specificity
 
-	files := []string{}
+	files := make(map[string]struct{})
 
 	wtStat, err := os.Stat(runConfig.writeto)
 	if err != nil {
@@ -37,17 +37,22 @@ func Run() {
 		os.Exit(1)
 	}
 	if wtStat.IsDir() {
-		files = append(files, getFiles(runConfig.writeto, runConfig.extensions)...)
+		writeDirFiles := getFiles(runConfig.writeto, runConfig.extensions)
+		for _, f := range writeDirFiles {
+			files[f] = struct{}{}
+		}
 	}
 
 	// [ ] replace with subdir check #active=2022-05-26 #zzz=2
-	if wdStr != runConfig.writeto {
-		wdFiles := getFiles(wdStr, runConfig.extensions)
-		files = append(files, wdFiles...)
+	if wrkdirStr != runConfig.writeto {
+		wdFiles := getFiles(wrkdirStr, runConfig.extensions)
+		for _, f := range wdFiles {
+			files[f] = struct{}{}
+		}
 	}
 
 	items := []*tuido.Item{}
-	for _, f := range files {
+	for f := range files {
 		items = append(items, getItems(f)...)
 	}
 

@@ -10,4 +10,5 @@ require (
 	github.com/go-git/go-git/v5 v5.11.0
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/muesli/termenv v0.15.1
+	github.com/nilock/walk-repo v0.1.0 // indirect
 )

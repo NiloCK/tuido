@@ -17,7 +17,7 @@ import (
 	lg "github.com/charmbracelet/lipgloss"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/nilock/tuido/tuido"
-	"github.com/nilock/tuido/utils"
+	walkrepo "github.com/nilock/walk-repo"
 )
 
 func Run() {
@@ -330,7 +330,8 @@ func getItems(file string) []*tuido.Item {
 func getFiles(wd string, extensions []string) []string {
 
 	files := []string{}
-	utils.WalkRepo(wd, func(path string, d fs.FileInfo, err error) error {
+
+	walkrepo.WalkRepo(wd, func(path string, d fs.FileInfo, err error) error {
 		// apply .tuido configured extensions if they exist, but do not
 		// read a configured writeto. writeto is decided by the root
 		// working directory or user config

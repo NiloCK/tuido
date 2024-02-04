@@ -369,8 +369,7 @@ func sortItems(items []*tuido.Item) {
 		y := items[j].Due()
 
 		if x == nil && y == nil {
-			return strings.Compare(items[i].Text(), items[j].Text()) < 0
-			// return true // prior behaviour - no swap, leave original order (grouped by file, order of appearance)
+			return true // no swap, leave original order (grouped by file, order of appearance)
 		} else if x == nil && y != nil {
 			return false
 		} else if x != nil && y == nil {

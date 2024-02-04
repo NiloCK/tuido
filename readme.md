@@ -63,9 +63,9 @@ Examples:
 
 Displayed items are sorted like this:
 
-1. sort by how important items are (the number of leading !s). Adjust an item's importance with `!` and `1`.
-2. sort by the specified due dates, if any due date is present (eg, with the #due= tag)
-3. sort alphabetically
+1. First, list the most `important` items (prefixed with `!`)
+2. Then, list those items with set `due` dates, from earliest to latest
+3. Finally, items are grouped according to the order in which they were parsed from disk. This has the effect of grouping items from the same file together.
 
 ### Configuration
 
@@ -119,7 +119,6 @@ GPL
     - [x] from #due tags
     - [ ] according to [x]it spec
   - [x] (for creation #date) from the names of an item's source file
-- [@] #ui sort items by priority [x], age [ ], or due #dates [x]
 - [ ] #feat #ui provide details / context (preview into source file) on current selected item, or quick open of an item's source location
 - [ ] #feat allow plain-text fuzzy text search/filter of item body text (only tag names currently)
 - [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui #maybe

@@ -84,10 +84,10 @@ func (i *Item) Location() string {
 }
 
 // Status returns the status of the item. One of:
-//  - open (ie, noted but not begun)
-//  - ongoing (ie, in progress)
-//  - checked (ie, completed)
-//  - obsolete (ie, no longer necessary)
+//   - open (ie, noted but not begun)
+//   - ongoing (ie, in progress)
+//   - checked (ie, completed)
+//   - obsolete (ie, no longer necessary)
 func (i Item) Satus() status {
 	return strToStatus(i.trimmed())
 }
@@ -248,8 +248,9 @@ func (i *Item) Escalate() error {
 // a leading exclamation mark.
 //
 // NB: deescalate is not up to [x]it spec wrt items prefixed with
-//     both periods and exclamations, and will fail to deescalate,
-//     eg, "..!!! do this"
+//
+//	both periods and exclamations, and will fail to deescalate,
+//	eg, "..!!! do this"
 //
 // [ ] make [x]it spec compliant
 // [ ] wants unit tests
@@ -348,7 +349,7 @@ func fileInsert(file string, lineNumber int, expected string, updated string) er
 }
 
 // String returns the item status box plus body text. EG, for the item
-//  - [x] this one
+//   - [x] this one
 //
 // String() returns "[x] this one"
 func (i Item) String() string {
@@ -363,7 +364,7 @@ func (i Item) String() string {
 }
 
 // Text returns the item's body text. EG, for item
-//  - [x] this one is done
+//   - [x] this one is done
 //
 // the Text() is "this one is done"
 func (i Item) Text() string {
@@ -456,14 +457,14 @@ func parseTagDate(t Tag) *time.Time {
 
 // IsTuido inspects a raw string for parsibility into a tuido item.
 // It relaxes the [x]it spec in the following ways:
-//  - leading whitespace is allowed
-//  - markdown style bulleted items are allowed
-//  - golang inline "//" comments are parsed for items
+//   - leading whitespace is allowed
+//   - markdown style bulleted items are allowed
+//   - golang inline "//" comments are parsed for items
 //
 // [ ] unit #test this w/ a bunch of expected passes & failures
 // [ ] #maybe allow numbered md lists (1. [ ] ...)
 // [ ] #maybe include a language map for code-comment parsing. ie, {".rb": "#", ".go": "//"}
-//  [ ]! #maybe require a file extension for this fcn. Allows for PL specific rules, as well as md
+// [ ] ! #maybe require a file extension for this fcn. Allows for PL specific rules, as well as md
 func IsTuido(raw string) bool {
 	trimmed := trim(raw)
 

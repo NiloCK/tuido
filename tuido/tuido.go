@@ -367,6 +367,10 @@ func (i Item) String() string {
 //
 // the Text() is "this one is done"
 func (i Item) Text() string {
+	trimmed := i.trimmed()
+	if len(trimmed) < 4 {
+		return ""
+	}
 	return i.trimmed()[4:]
 }
 

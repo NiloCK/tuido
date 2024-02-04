@@ -9,6 +9,7 @@ An opinionated terminal interface for efficient browsing and management of [[x]i
 - [x] one-button (`p`) pomodoro mode for timeboxed focus on individual items; tracks overall time spend
 - [x] one-button (`z`) progressive snooze parks items for 1,2,3,5,8,... days
 - [x] progressive deterrence for adding new items
+- [x] respect for .gitignore configs (ie, don't parse a billion `node_modules` files)
 
 ![tuidi preview](./preview.gif)
 
@@ -124,7 +125,6 @@ GPL
 - [ ] have infrastructure for managing task-specific checklist files (beach trip) #feat #ui #maybe
 - [@] #feat #maybe accept command line flags or config for other file extenstions, source directories, etc
 - [ ] #feat #maybe fully respect / implement the [x]it spec
-- [ ] #feat respect .gitignore configs
 - [x] tag v0.0.1, produce platform builds
 - [ ] add command-line flags for
   - [ ] ignoring current working dir (ie, run only in the write-to directory) `tuido --norecurse`

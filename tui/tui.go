@@ -216,7 +216,13 @@ func (t *tui) startPomo() {
 
 func (t *tui) setPeekMode() tea.Cmd {
 	t.mode = peek
-	t.peek = peekScreen{*t.currentSelection()}
+
+	if t.currentSelection() != nil {
+		t.peek = peekScreen{*t.currentSelection()}
+	} else if len(t.items) != 0 {
+		t.peek = peekScreen{*t.items[0]}
+	}
+
 	return nil
 }
 

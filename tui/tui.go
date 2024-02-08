@@ -287,7 +287,12 @@ func (t *tui) populateRenderSelection() {
 func (t *tui) applyFilter() {
 	filter := t.filter.Value()
 	if len(filter) != 0 {
-		keywords := strings.Split(filter, " ")
+		keywords := strings.Fields(filter)
+
+		// display all items in case of a trailing space in the filter
+		if (strings.HasSuffix(filter, " ")) {
+			keywords = append(keywords, "")
+		}
 
 		filtered := []*tuido.Item{}
 

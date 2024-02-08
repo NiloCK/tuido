@@ -76,7 +76,7 @@ const (
 func newTUI(items []*tuido.Item, cfg config) tui {
 	// the search bar:
 	filter := textinput.New()
-	filter.Placeholder = "filter by #tag. press /"
+	filter.Placeholder = "filter (press /)"
 
 	itemEditor := textinput.New()
 	itemEditor.Prompt = ">>>"
@@ -278,28 +278,24 @@ func (t *tui) populateRenderSelection() {
 		}
 	}
 
-	t.applyTagFilters()
+	t.applyFilter()
 	sortItems(t.renderSelection)
 	// ensure the previous selection value is still in range
 	t.setSelection(t.selection)
 }
 
-func (t *tui) applyTagFilters() {
-	filterTags := tuido.Tags(t.filter.Value())
-	if len(filterTags) != 0 {
+func (t *tui) applyFilter() {
+	filter := t.filter.Value()
+	if len(filter) != 0 {
+		keywords := strings.Split(filter, " ")
 
 		filtered := []*tuido.Item{}
 
 		for _, item := range t.renderSelection {
-			itemTags := item.Tags()
-
-			for _, iTag := range itemTags {
-				for _, fTag := range filterTags {
-					// [ ] should not use the prefix when a tag is "complete" (followed by a space) in the prompt
-					if strings.HasPrefix(iTag.Name(), fTag.Name()) {
-						filtered = append(filtered, item)
-						continue
-					}
+			for _, k := range keywords {
+				if strings.Contains(item.Text(), k) {
+					filtered = append(filtered, item)
+					break
 				}
 			}
 		}

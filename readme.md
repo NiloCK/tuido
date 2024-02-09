@@ -5,7 +5,7 @@ An opinionated terminal interface for efficient browsing and management of [[x]i
 - [x] searches the working directory recursively for [x]it! compatible items in `.xit`, `.md`, and `.txt` files
 - [x] compactly displays pending todos and offers navigation between `todo` and `done`
 - [x] allows for creating new items, updating existing items, and persists updates to disk
-- [x] allows for filtering via `tags`
+- [x] search / filter todos by keywords
 - [x] one-button (`p`) pomodoro mode for timeboxed focus on individual items; tracks overall time spend
 - [x] one-button (`z`) progressive snooze parks items for 1,2,3,5,8,... days
 - [x] progressive deterrence for adding new items
@@ -35,7 +35,7 @@ tuido
   - **z**: snooze this item (set a later active date)
   - **!**/**1**: bump/decrement the `importance` modifier on this item
 - **[tab]**: switch between pending and done items
-- **/**: filter list by `#tags`
+- **/**: filter list by search terms (plain-old-string-matching)
 - **[up]**, **[down]**: navigate items
 - **q**: quit
 

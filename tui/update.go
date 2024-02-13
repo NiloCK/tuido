@@ -157,7 +157,9 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "/":
 			t.filter.Focus()
 		case "p":
-			t.setPomoMode()
+			if t.currentSelection() != nil {
+				t.setPomoMode()
+			}
 		case "?":
 			t.mode = help
 		// editing current selection
@@ -176,21 +178,25 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case " ":
 			t.currentSelection().SetStatus(tuido.Open)
 		case "!":
-			current := t.currentSelection()
-			t.currentSelection().Escalate()
-			t.populateRenderSelection()
-			for i, item := range t.renderSelection {
-				if current == item {
-					t.setSelection(i)
+			if t.currentSelection() != nil {
+				current := t.currentSelection()
+				t.currentSelection().Escalate()
+				t.populateRenderSelection()
+				for i, item := range t.renderSelection {
+					if current == item {
+						t.setSelection(i)
+					}
 				}
 			}
 		case "1":
-			current := t.currentSelection()
-			t.currentSelection().Deescalate()
-			t.populateRenderSelection()
-			for i, item := range t.renderSelection {
-				if current == item {
-					t.setSelection(i)
+			if t.currentSelection() != nil {
+				current := t.currentSelection()
+				t.currentSelection().Deescalate()
+				t.populateRenderSelection()
+				for i, item := range t.renderSelection {
+					if current == item {
+						t.setSelection(i)
+					}
 				}
 			}
 		case "e":

@@ -227,10 +227,12 @@ func (t *tui) setPeekMode() tea.Cmd {
 }
 
 func (t *tui) setEditMode() tea.Cmd {
-	t.mode = edit
-	t.itemEditor.SetValue(t.currentSelection().Text())
-	t.itemEditor.CursorEnd()
-	t.itemEditor.Focus()
+	if t.currentSelection() != nil {
+		t.mode = edit
+		t.itemEditor.SetValue(t.currentSelection().Text())
+		t.itemEditor.CursorEnd()
+		t.itemEditor.Focus()
+	}
 	return nil
 }
 

@@ -85,8 +85,8 @@ func (t tui) footer() string {
 			right = footStyle.Copy().Faint(true).
 				Render("[enter] - Save Changes,  [esc] - Discard Changes")
 		} else if t.mode == peek {
-		  right = footStyle.Copy().Faint(true).Render("[esc] - Return to list view")
-    }
+			right = footStyle.Copy().Faint(true).Render("[esc] - Return to list view")
+		}
 	}
 
 	spacerWidth := max(0, t.w-lg.Width(lg.JoinHorizontal(lg.Bottom, itemStr, right))-5)

@@ -17,6 +17,7 @@ import (
 	lg "github.com/charmbracelet/lipgloss"
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/nilock/tuido/tuido"
+	"github.com/nilock/tuido/utils"
 	walkrepo "github.com/nilock/walk-repo"
 )
 
@@ -59,7 +60,10 @@ func Run() {
 
 	sortItems(items)
 
-	prog := tea.NewProgram(newTUI(items, runConfig), tea.WithAltScreen())
+	tui := newTUI(items, runConfig)
+	tui.houseKeeping()
+
+	prog := tea.NewProgram(tui, tea.WithAltScreen())
 
 	if err := prog.Start(); err != nil {
 		panic(err)
@@ -84,6 +88,7 @@ func newTUI(items []*tuido.Item, cfg config) tui {
 	return tui{
 		config:          cfg,
 		err:             nil,
+		notifs:          []string{},
 		items:           items,
 		renderSelection: nil,
 		itemsFilter:     todo,
@@ -96,6 +101,18 @@ func newTUI(items []*tuido.Item, cfg config) tui {
 		h:               0,
 		w:               0,
 	}
+}
+
+func (t *tui) houseKeeping() {
+	local := utils.Version()
+	curent := utils.LatestVersion()
+
+	if local != curent {
+		t.notifs = append(t.notifs,
+			fmt.Sprintf("New version available: %s. Currently running %s. \nUpdates at %s",
+				curent, local, utils.ReleaseURL))
+	}
+
 }
 
 // populateTagColorStyles returns a coloring style for
@@ -139,6 +156,8 @@ const (
 type tui struct {
 	config config
 	err    error
+
+	notifs []string
 
 	items       []*tuido.Item
 	itemsFilter itemType
@@ -292,7 +311,7 @@ func (t *tui) applyFilter() {
 		keywords := strings.Fields(filter)
 
 		// display all items in case of a trailing space in the filter
-		if (strings.HasSuffix(filter, " ")) {
+		if strings.HasSuffix(filter, " ") {
 			keywords = append(keywords, "")
 		}
 

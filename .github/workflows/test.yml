@@ -8,6 +8,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+        with-tags: true
     - name: Set up Go
       uses: actions/setup-go@v2
       with:

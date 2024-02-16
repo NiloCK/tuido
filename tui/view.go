@@ -55,7 +55,13 @@ func (t tui) header() string {
 
 	tabs := lg.JoinHorizontal(lg.Bottom, todoTab, doneTab)
 	searchBox := tabGapStyle.Render(t.filter.View())
-	helpPrompt := tabGapStyle.Copy().Faint(true).Render("? - help")
+
+	helpPrompt := "? - help"
+	if len(t.notifs) > 0 {
+		helpPrompt += fmt.Sprintf(" (%d)", len(t.notifs))
+	}
+	helpPrompt = tabGapStyle.Copy().Faint(true).Render(helpPrompt)
+
 	gap := tabGapStyle.Render(strings.Repeat(" ", max(0, t.w-lg.Width(
 		lg.JoinHorizontal(lg.Bottom, tabs, searchBox, helpPrompt))-5),
 	))
@@ -150,7 +156,11 @@ func (t tui) View() string {
 
 		txt := lg.NewStyle().Width(28).Align(lg.Left).
 			Render("\n\n\ntuido reads txt, md, and xit files from the working directory and locates xit style todo items, allowing for quick navigation and discovery.\n\nUpdating an item's status in tuido writes the corresponding change to disk.")
-		return lg.JoinHorizontal(lg.Top, "  ", controls, "    ", txt)
+
+		notifications := strings.Join(t.notifs, "\n")
+		notifications = lg.NewStyle().Bold(true).Foreground(lg.Color("#ffbbaa")).Render(notifications)
+
+		return lg.JoinVertical(lg.Left, notifications, lg.JoinHorizontal(lg.Top, "  ", controls, "    ", txt))
 	case peek:
 		return t.peek.View(t.h, t.w, t.footer)
 	default:

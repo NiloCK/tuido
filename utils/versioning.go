@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"runtime"
 	"strings"
 )
 
 const version = "v0.0.8"
 const ReleaseURL = "https://github.com/NiloCK/tuido/releases/latest"
+const TaggedReleaseRoot = "https://github.com/NiloCK/tuido/releases/tag/"
 
 // Version returns the currently running version of the application.
 func Version() string {
@@ -60,4 +62,17 @@ func LatestVersion() string {
 	}
 
 	return latest
+}
+
+func LatestVersionURL() string {
+	latest, err := getLatestRedirectURL()
+
+	if err != nil {
+		return fmt.Sprintf("Error getting latest version: %s", err)
+	}
+
+	os := runtime.GOOS
+	arch := runtime.GOARCH
+
+	return TaggedReleaseRoot + latest + fmt.Sprintf("/tuido_%s_%s_%s.tar.gz", latest, os, arch)
 }

@@ -4,6 +4,12 @@ on:
   push:
     tags:
       - "*"
+  workflow_dispatch: # Add this to enable manual triggers
+    inputs: # Optional: add inputs if you want to parameterize manual runs
+      tag_name: # Optional: allow specifying a tag when running manually
+        description: "Tag to release"
+        required: false
+        type: string
 
 jobs:
   release:

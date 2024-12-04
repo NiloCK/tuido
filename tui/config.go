@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -19,6 +20,10 @@ type config struct {
 	//  - a file, which will have new items appended as new lines, or
 	//  - a directory, which will be written with YYYY-MM-DD.xit files for each day
 	writeto string
+
+	// frictionThreshold is the number of items that can be displayed or added to
+	// before a nag deterrent is displayed.
+	frictionThreshold int
 }
 
 func (cfg config) String() string {
@@ -34,8 +39,9 @@ func (cfg config) String() string {
 // **all** values are overwritten in `loadFromDefaultConfigLocation()` via
 // `init()`, if a configuration file is found in the default location.
 var runConfig config = config{
-	extensions: []string{"xit", "md", "txt"},
-	writeto:    "~/.tuido",
+	extensions:        []string{"xit", "md", "txt"},
+	writeto:           "~/.tuido",
+	frictionThreshold: 5,
 }
 
 func adoptConfigSettings(location string) {
@@ -60,9 +66,9 @@ func parseConfigIfExists(configPath string) *config {
 
 // parseConfig reads a file for tuido configuration flags according
 // to the following. It:
-//  - reads from the first line of the file
-//  - pulls one config flag from each line
-//  - ends reading the file when it encounters a line with no config flags
+//   - reads from the first line of the file
+//   - pulls one config flag from each line
+//   - ends reading the file when it encounters a line with no config flags
 //
 // This allows the .tuido file to be used as both configuration and as an
 // append target for new items authored in-tui.
@@ -83,6 +89,12 @@ func parseConfig(file *os.File) config {
 			}
 			if split[0] == "writeto" {
 				cfg.writeto = split[1]
+			}
+			if split[0] == "frictionThreshold" {
+				n, err := strconv.Atoi(split[1])
+				if err == nil {
+					cfg.frictionThreshold = n
+				}
 			}
 
 		} else {

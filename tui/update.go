@@ -219,7 +219,7 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (t *tui) tryCreateNewItem() {
-	if len(t.renderSelection) >= 5 {
+	if len(t.renderSelection) >= t.config.frictionThreshold {
 		t.setNag("Too many items on your plate...", len(t.renderSelection)-4, navigation)
 	} else {
 		t.createNewItem()

@@ -1,2 +1,3 @@
 extensions=go,md
 writeto=readme.md
+frictionThreshold=3

@@ -80,8 +80,8 @@ github.com/muesli/termenv v0.9.0/go.mod h1:R/LzAKf+suGs4IsO95y7+7DpFHO0KABgnZqtl
 github.com/muesli/termenv v0.11.1-0.20220212125758-44cd13922739/go.mod h1:Bd5NYQ7pd+SrtBSrSNoBBmXlcY8+Xj4BMJgh8qcZrvs=
 github.com/muesli/termenv v0.15.1 h1:UzuTb/+hhlBugQz28rpzey4ZuKcZ03MeKsoG7IJZIxs=
 github.com/muesli/termenv v0.15.1/go.mod h1:HeAQPTzpfs016yGtA4g00CsdYnVLJvxsS4ANqrZs2sQ=
-github.com/nilock/walk-repo v0.1.0 h1:UbLoUHb06AvKYfTmLJq+cqJWImdDgKA6BY4o0Lw7euI=
-github.com/nilock/walk-repo v0.1.0/go.mod h1:Z5rjZZwT2tm+ZFVBG0ZOHpNGorL6mmc0T0NhG8mo0sU=
+github.com/nilock/walk-repo v0.1.2 h1:NY7hcjg/HD1+xxnyKGstExlODtAXpmApmeCYxO4uQ8U=
+github.com/nilock/walk-repo v0.1.2/go.mod h1:Z5rjZZwT2tm+ZFVBG0ZOHpNGorL6mmc0T0NhG8mo0sU=
 github.com/onsi/gomega v1.27.10 h1:naR28SdDFlqrG6kScpT8VWpu1xWY5nJRCF3XaYyBjhI=
 github.com/pjbgf/sha1cd v0.3.0 h1:4D5XXmUUBUl/xQ6IjCkEAbqXskkq/4O7LmGn0AqMDs4=
 github.com/pjbgf/sha1cd v0.3.0/go.mod h1:nZ1rrWOcGJ5uZgEEVL1VUM9iRQiZvWdbZjkKyFzPPsI=

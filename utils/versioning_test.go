@@ -3,6 +3,8 @@ package utils_test
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/go-git/go-git/v5"
@@ -34,7 +36,56 @@ func TestVersion(t *testing.T) {
 		return nil
 	})
 
-	want := tags[len(tags)-1]
+	fmt.Println("TAGS:", tags)
+
+	// get latest tag
+	var latestTag string
+	var latestMajor, latestMinor, latestPatch = -1, -1, -1
+
+	for _, tag := range tags {
+		// Remove 'v' prefix
+		version := strings.TrimPrefix(tag, "v")
+
+		split := strings.Split(version, ".")
+		if len(split) != 3 {
+			continue
+		}
+
+		major, err := strconv.Atoi(split[0])
+		if err != nil {
+			continue
+		}
+		minor, err := strconv.Atoi(split[1])
+		if err != nil {
+			continue
+		}
+		patch, err := strconv.Atoi(split[2])
+		if err != nil {
+			continue
+		}
+
+		// First tag or higher major version
+		if latestMajor == -1 || major > latestMajor {
+			latestMajor, latestMinor, latestPatch = major, minor, patch
+			latestTag = tag
+			continue
+		}
+
+		// Same major, higher minor
+		if major == latestMajor && minor > latestMinor {
+			latestMajor, latestMinor, latestPatch = major, minor, patch
+			latestTag = tag
+			continue
+		}
+
+		// Same major and minor, higher patch
+		if major == latestMajor && minor == latestMinor && patch > latestPatch {
+			latestMajor, latestMinor, latestPatch = major, minor, patch
+			latestTag = tag
+		}
+	}
+
+	want := latestTag
 
 	if got := utils.Version(); got != want {
 		t.Errorf("Version() = %v, want %v", got, want)

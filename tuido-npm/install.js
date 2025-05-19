@@ -1,4 +1,4 @@
-const { install } = require("binary-install");
+const { Binary } = require("binary-install");
 const os = require("os");
 const { version } = require("./package.json");
 
@@ -64,7 +64,8 @@ function getBinary() {
 try {
   const { url, name } = getBinary();
   console.log(`Downloading tuido binary from ${url}`);
-  install(url, name);
+  const binary = new Binary(name, url);
+  binary.install();
 } catch (e) {
   console.error("Error installing tuido:", e);
   process.exit(1);

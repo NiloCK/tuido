@@ -204,8 +204,13 @@ func (i *Item) GetContext(height int) (string, int) {
 	}
 
 	preItemLines := strings.Join(lines[first:i.line], "\n")
+
 	item := lines[i.line]
-	postItemLines := strings.Join(lines[i.line+1:last], "\n")
+
+	postItemLines := ""
+	if (i.line + 1) < last {
+		postItemLines = strings.Join(lines[i.line+1:last], "\n")
+	}
 
 	item = lipgloss.NewStyle().Bold(true).Italic(true).Render(item) // not working - clobbered by styles from chroma
 

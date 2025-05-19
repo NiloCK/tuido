@@ -1,9 +1,6 @@
 name: Publish NPM Package
 
 on:
-  push:
-    tags:
-      - 'v*'
   workflow_run:
     workflows: ["Release"]
     types:
@@ -12,11 +9,11 @@ on:
 jobs:
   publish-npm:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        
+
       - name: Verify GitHub release exists
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
@@ -24,24 +21,24 @@ jobs:
           VERSION=${GITHUB_REF#refs/tags/v}
           # Check if the GitHub release exists by querying the API
           RELEASE_EXISTS=$(curl -s -o /dev/null -w "%{http_code}" https://api.github.com/repos/${{ github.repository }}/releases/tags/v${VERSION})
-          
+
           if [ "$RELEASE_EXISTS" != "200" ]; then
             echo "::error::GitHub release for v${VERSION} does not exist yet. Binary release must be completed first."
             exit 1
           fi
           echo "GitHub release v${VERSION} exists, proceeding with npm publish."
-      
+
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
-          registry-url: 'https://registry.npmjs.org/'
-      
+          node-version: "16"
+          registry-url: "https://registry.npmjs.org/"
+
       - name: Extract version from tag
         if: startsWith(github.ref, 'refs/tags/v')
         id: extract_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
-        
+
       - name: Check for required binaries in release
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
@@ -52,45 +49,45 @@ jobs:
 
           # Verify that critical binary assets exist in the release
           RELEASE_ASSETS=$(curl -s https://api.github.com/repos/${{ github.repository }}/releases/tags/v${VERSION} | jq -r '.assets[].name')
-          
+
           # Check for at least one binary for a major platform
           if ! echo "$RELEASE_ASSETS" | grep -q "tuido_${VERSION}_linux_amd64"; then
             echo "::warning::Linux AMD64 binary not found in release"
           fi
-          
+
           if ! echo "$RELEASE_ASSETS" | grep -q "tuido_${VERSION}_darwin"; then
             echo "::warning::macOS binary not found in release"
           fi
-          
+
           if ! echo "$RELEASE_ASSETS" | grep -q "tuido_${VERSION}_windows"; then
             echo "::warning::Windows binary not found in release"
           fi
-          
+
           # Validate that at least some binary assets exist
           if [ -z "$RELEASE_ASSETS" ]; then
             echo "::error::No binary assets found in GitHub release v${VERSION}"
             exit 1
           fi
-      
+
       - name: Update package.json version
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
           cd tuido-npm
           # Update version in package.json to match the tag
           npm version ${VERSION} --no-git-tag-version
-      
+
       - name: Install dependencies
         run: |
           cd tuido-npm
           npm ci || npm install
-      
+
       - name: Publish to NPM
         run: |
           cd tuido-npm
           npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          
+
       - name: Update release notes
         if: success() && startsWith(github.ref, 'refs/tags/v')
         uses: actions/github-script@v6
@@ -104,16 +101,16 @@ jobs:
                 repo: context.repo.repo,
                 tag: `v${version}`
               });
-              
+
               const updatedBody = release.body + '\n\n📦 NPM package has been published successfully! https://www.npmjs.com/package/tuido';
-              
+
               await github.rest.repos.updateRelease({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 release_id: release.id,
                 body: updatedBody
               });
-              
+
               console.log('Successfully updated release notes with NPM package information');
             } catch (error) {
               console.log(`Error updating release notes: ${error}`);

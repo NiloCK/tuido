@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { runBinary } = require("binary-install");
+const { Binary } = require("binary-install");
 const os = require("os");
 const path = require("path");
 
@@ -46,7 +46,9 @@ function getBinaryPath() {
 }
 
 try {
-  runBinary(getBinaryPath(), process.argv.slice(2));
+  const binaryPath = getBinaryPath();
+  const binary = new Binary("tuido", null, { installDirectory: path.dirname(binaryPath) });
+  binary.run(process.argv.slice(2));
 } catch (e) {
   console.error("Error running tuido:", e);
   process.exit(1);

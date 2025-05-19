@@ -1,0 +1,34 @@
+{
+  "name": "tuido",
+  "version": "0.0.10",
+  "description": "Terminal interface for managing tasks and todos in [x]it! format",
+  "bin": {
+    "tuido": "./bin/tuido-cli.js"
+  },
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NiloCK/tuido.git"
+  },
+  "keywords": [
+    "todo",
+    "task",
+    "xit",
+    "terminal",
+    "productivity"
+  ],
+  "author": "Colin Kennedy",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/NiloCK/tuido/issues"
+  },
+  "homepage": "https://github.com/NiloCK/tuido#readme",
+  "dependencies": {
+    "binary-install": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=12"
+  }
+}

@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-const version = "v0.0.13"
+const version = "v0.0.14"
 const ReleaseURL = "https://github.com/NiloCK/tuido/releases/latest"
 
 // Version returns the currently running version of the application.

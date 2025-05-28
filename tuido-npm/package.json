@@ -1,6 +1,6 @@
 {
   "name": "tuido",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "Terminal interface for managing tasks and todos in [x]it! format",
   "bin": {
     "tuido": "./bin/tuido-cli.js"

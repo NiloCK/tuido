@@ -40,7 +40,7 @@ func TestNewTag(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		tag := newTag(test.input)
+		tag := NewTag(test.input)
 		if tag.name != test.name {
 			t.Errorf("expected tag name %s, but found %s", test.name, tag.name)
 		}

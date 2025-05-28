@@ -564,7 +564,7 @@ func Tags(s string) []Tag {
 
 	for _, token := range split {
 		if strings.HasPrefix(token, "#") && len(token) > 1 {
-			tags = append(tags, newTag(token[1:]))
+			tags = append(tags, NewTag(token[1:]))
 		}
 	}
 
@@ -587,8 +587,8 @@ func (t Tag) String() string {
 	return t.name
 }
 
-// newTag splits a string token "#name=value" into a Tag struct.
-func newTag(s string) Tag {
+// NewTag splits a string token "#name=value" into a Tag struct.
+func NewTag(s string) Tag {
 	if strings.HasPrefix(s, "#") && len(s) > 1 {
 		s = s[1:]
 	}

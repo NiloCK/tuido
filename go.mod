@@ -11,6 +11,7 @@ require (
 	github.com/lucasb-eyer/go-colorful v1.2.0
 	github.com/muesli/termenv v0.15.1
 	github.com/nilock/walk-repo v0.1.2
+	github.com/sahilm/fuzzy v0.1.1
 )
 
 require (

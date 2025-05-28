@@ -85,11 +85,18 @@ Include a `.tuido` file in individual directories to add filetypes for parsing a
 extensions=go,js,cpp
 ```
 
+To configure the friction threshold that triggers the deterrence nag when adding items:
+
+```
+frictionThreshold=10
+```
+
 Default configuration values are:
 
 ```
 writeto=~/.tuido
 extensions=xit,txt,md
+frictionThreshold=5
 ```
 
 ## Development

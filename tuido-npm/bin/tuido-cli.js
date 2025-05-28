@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-const { Binary } = require("binary-install");
+const { spawn } = require("child_process");
+const fs = require("fs");
 const os = require("os");
 const path = require("path");
 
@@ -17,17 +18,6 @@ function getPlatform() {
   return mappings[platform] || platform;
 }
 
-function getArch() {
-  const arch = os.arch();
-  const mappings = {
-    x64: "amd64",
-    ia32: "386",
-    arm: "arm",
-    arm64: "arm64",
-  };
-  return mappings[arch] || arch;
-}
-
 function getBinaryPath() {
   const platform = getPlatform();
   let extension = "";
@@ -36,20 +26,82 @@ function getBinaryPath() {
     extension = ".exe";
   }
 
-  return path.join(
-    __dirname,
-    "..",
-    "node_modules",
-    ".bin",
-    `tuido${extension}`,
-  );
+  // binary-install stores binaries in: node_modules/<package>/binary/<name>
+  return path.join(__dirname, "..", "binary", `tuido${extension}`);
+}
+
+function findBinaryPath() {
+  // Try the standard binary-install location first
+  let binaryPath = getBinaryPath();
+  
+  if (fs.existsSync(binaryPath)) {
+    return binaryPath;
+  }
+
+  // Fallback: check if binary-install used a different location
+  const alternativePaths = [
+    path.join(__dirname, "..", "node_modules", ".bin", "tuido"),
+    path.join(__dirname, "..", "tuido"),
+    path.join(__dirname, "..", "bin", "tuido"),
+  ];
+
+  for (const altPath of alternativePaths) {
+    const platform = getPlatform();
+    const withExt = platform === "windows" ? `${altPath}.exe` : altPath;
+    if (fs.existsSync(withExt)) {
+      return withExt;
+    }
+    if (fs.existsSync(altPath)) {
+      return altPath;
+    }
+  }
+
+  return null;
 }
 
 try {
-  const binaryPath = getBinaryPath();
-  const binary = new Binary("tuido", null, { installDirectory: path.dirname(binaryPath) });
-  binary.run(process.argv.slice(2));
+  const binaryPath = findBinaryPath();
+  
+  if (!binaryPath) {
+    console.error("Error: tuido binary not found. Please try reinstalling the package.");
+    console.error("Expected location:", getBinaryPath());
+    process.exit(1);
+  }
+
+  // Check if binary is executable
+  try {
+    fs.accessSync(binaryPath, fs.constants.F_OK | fs.constants.X_OK);
+  } catch (err) {
+    console.error(`Error: tuido binary found but not executable: ${binaryPath}`);
+    console.error("Try reinstalling the package or check file permissions.");
+    process.exit(1);
+  }
+
+  // Execute the binary
+  const child = spawn(binaryPath, process.argv.slice(2), {
+    stdio: "inherit",
+    windowsHide: false,
+  });
+
+  child.on("error", (err) => {
+    console.error("Error executing tuido:", err.message);
+    process.exit(1);
+  });
+
+  child.on("close", (code) => {
+    process.exit(code || 0);
+  });
+
+  // Handle signals
+  process.on("SIGINT", () => {
+    child.kill("SIGINT");
+  });
+
+  process.on("SIGTERM", () => {
+    child.kill("SIGTERM");
+  });
+
 } catch (e) {
-  console.error("Error running tuido:", e);
+  console.error("Error running tuido:", e.message);
   process.exit(1);
 }

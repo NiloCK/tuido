@@ -18,6 +18,7 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/nilock/tuido/tuido"
 	"github.com/nilock/tuido/utils"
+	"github.com/sahilm/fuzzy"
 	walkrepo "github.com/nilock/walk-repo"
 )
 
@@ -300,34 +301,54 @@ func (t *tui) populateRenderSelection() {
 	}
 
 	t.applyFilter()
-	sortItems(t.renderSelection)
+	
+	// Only sort if no filter is active - preserve fuzzy search ranking
+	if len(t.filter.Value()) == 0 {
+		sortItems(t.renderSelection)
+	}
+	
 	// ensure the previous selection value is still in range
 	t.setSelection(t.selection)
 }
 
 func (t *tui) applyFilter() {
-	filter := t.filter.Value()
-	if len(filter) != 0 {
-		keywords := strings.Fields(filter)
-
-		// display all items in case of a trailing space in the filter
-		if strings.HasSuffix(filter, " ") {
-			keywords = append(keywords, "")
-		}
-
-		filtered := []*tuido.Item{}
-
-		for _, item := range t.renderSelection {
-			for _, k := range keywords {
-				if strings.Contains(item.Text(), k) {
-					filtered = append(filtered, item)
-					break
-				}
-			}
-		}
-
-		t.renderSelection = filtered
+	query := t.filter.Value()
+	if len(query) == 0 {
+		return
 	}
+	
+	keywords := strings.Fields(query)
+	if len(keywords) == 0 {
+		return
+	}
+	
+	// Start with all items for first keyword
+	currentSelection := t.renderSelection
+	
+	// For each keyword, filter the current selection using fuzzy search
+	for _, keyword := range keywords {
+		if len(currentSelection) == 0 {
+			break
+		}
+		
+		// Prepare search targets for fuzzy matching
+		var searchTargets []string
+		for _, item := range currentSelection {
+			searchTargets = append(searchTargets, item.Text())
+		}
+		
+		// Perform fuzzy search on current keyword
+		matches := fuzzy.Find(keyword, searchTargets)
+		
+		// Update selection to only include fuzzy matches
+		newSelection := make([]*tuido.Item, len(matches))
+		for i, match := range matches {
+			newSelection[i] = currentSelection[match.Index]
+		}
+		currentSelection = newSelection
+	}
+	
+	t.renderSelection = currentSelection
 }
 
 func (t tui) Init() tea.Cmd { return tick() }

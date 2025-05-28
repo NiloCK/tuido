@@ -33,6 +33,17 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if t.mode == help {
+		if msg, ok := msg.(tea.KeyMsg); ok {
+			if msg.String() == "?" {
+				t.mode = configViewer
+				return t, nil
+			}
+			t.mode = navigation
+			return t, nil
+		}
+	}
+
+	if t.mode == configViewer {
 		if _, ok := msg.(tea.KeyMsg); ok {
 			t.mode = navigation
 			return t, nil

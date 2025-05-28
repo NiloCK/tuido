@@ -158,6 +158,7 @@ const (
 	pomo
 	nag
 	peek
+	configViewer
 )
 
 type tui struct {

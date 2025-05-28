@@ -61,12 +61,24 @@ function getBinary() {
   };
 }
 
-try {
-  const { url, name } = getBinary();
-  console.log(`Downloading tuido binary from ${url}`);
-  const binary = new Binary(name, url);
-  binary.install();
-} catch (e) {
-  console.error("Error installing tuido:", e);
-  process.exit(1);
+function install() {
+  try {
+    const { url, name } = getBinary();
+    console.log(`Installing tuido for ${os.platform()}-${os.arch()}`);
+    console.log(`Downloading tuido binary from ${url}`);
+    
+    const binary = new Binary(name, url);
+    binary.install();
+    console.log(`Successfully installed tuido binary: ${name}`);
+  } catch (e) {
+    console.error("Error installing tuido:", e.message || e);
+    console.error("Please check:");
+    console.error("1. Your internet connection");
+    console.error("2. That the release exists on GitHub");
+    console.error("3. Your platform/architecture is supported");
+    console.error(`Attempted URL: ${getBinary().url}`);
+    process.exit(1);
+  }
 }
+
+install();

@@ -63,7 +63,24 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if t.mode == pomo {
 		if t.pomoTimeRemaining > 0 {
-			return t, nil // no msg processing other than the timer during a running clock
+			// Allow specific keys to exit pomodoro early
+			if msg, ok := msg.(tea.KeyMsg); ok {
+				switch msg.String() {
+				case "x":
+					// Mark item as done and exit pomo
+					t.currentSelection().IncrementTimeSpent(t.pomoTimeSet - t.pomoTimeRemaining)
+					t.currentSelection().SetStatus(tuido.Checked)
+					t.mode = navigation
+					return t, nil
+				case "s", "~":
+					// Mark item as obsolete and exit pomo
+					t.currentSelection().IncrementTimeSpent(t.pomoTimeSet - t.pomoTimeRemaining)
+					t.currentSelection().SetStatus(tuido.Obsolete)
+					t.mode = navigation
+					return t, nil
+				}
+			}
+			return t, nil // no other msg processing during a running clock
 		}
 		switch msg := msg.(type) {
 		case tea.KeyMsg:

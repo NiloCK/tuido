@@ -137,8 +137,10 @@ func (t tui) View() string {
 			} else {
 				ret += fmt.Sprint(t.pomoTimeRemaining)
 			}
+			ret += "\n\n[x] done  [s] dismiss"
 		} else {
-			ret += t.pomoEditor.View()
+			ret += "Beginning a new pomodoro for\n\n" + t.pomoEditor.View() + "\n\nminutes."
+			ret += "\n\n\n\n[esc] to cancel"
 		}
 
 		return lg.NewStyle().

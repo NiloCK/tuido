@@ -27,8 +27,8 @@ type config struct {
 }
 
 func (cfg config) String() string {
-	return fmt.Sprintf("extensions=%s\nwriteto=%s\n",
-		strings.Join(cfg.extensions, ","), cfg.writeto)
+	return fmt.Sprintf("extensions=%s\nwriteto=%s\nfrictionThreshold=%d",
+		strings.Join(cfg.extensions, ","), cfg.writeto, cfg.frictionThreshold)
 }
 
 // runConfig is the initial, default values for the application configuration.

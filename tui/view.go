@@ -150,7 +150,8 @@ func (t tui) View() string {
 			Render(ret)
 
 	case help:
-		controls := "\n[press any key to exit help]\n\n"
+		controls := "\n[press ? again to view your current config]\n"
+		controls += "[press any other key to exit help]\n\n"
 		controls += "n: new item\ne: edit item\nz: snooze item\n!: escalate item\n1: relax item\np: begin a pomodoro\n\n"
 		controls += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
 		controls += "[tab]: cycle between todo and done tabs\n/: text search and #tag #filtering\n?: enter help\n\n"
@@ -163,6 +164,18 @@ func (t tui) View() string {
 		notifications = lg.NewStyle().Bold(true).Foreground(lg.Color("#ffbbaa")).Render(notifications)
 
 		return lg.JoinVertical(lg.Left, notifications, lg.JoinHorizontal(lg.Top, "  ", controls, "    ", txt))
+	case configViewer:
+		configText := "\n\nCurrent Configuration:\n\n" + t.config.String()
+		
+		instructions := "\n\n[press any key to return to navigation]"
+		
+		content := lg.NewStyle().Width(40).Align(lg.Left).
+			Render(configText + instructions)
+		
+		notifications := strings.Join(t.notifs, "\n")
+		notifications = lg.NewStyle().Bold(true).Foreground(lg.Color("#ffbbaa")).Render(notifications)
+		
+		return lg.JoinVertical(lg.Left, notifications, lg.JoinHorizontal(lg.Top, "  ", content))
 	case peek:
 		return t.peek.View(t.h, t.w, t.footer)
 	default:

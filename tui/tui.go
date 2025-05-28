@@ -428,12 +428,13 @@ func itemMatchesAllTags(item *tuido.Item, tagFilters []tuido.Tag) bool {
 // itemHasTag checks if an item has a specific tag (with optional value matching)
 func itemHasTag(itemTags []tuido.Tag, filter tuido.Tag) bool {
 	for _, tag := range itemTags {
-		if tag.Name() == filter.Name() {
+		// Use starts-with matching for tag names to enable partial matching
+		if strings.HasPrefix(tag.Name(), filter.Name()) {
 			// If filter has no value (just tag name), any value matches
 			if filter.String() == filter.Name() {
 				return true
 			}
-			// If filter has value, it must match exactly
+			// If filter has value, tag name must start with filter name AND value must match exactly
 			if tag.String() == filter.String() {
 				return true
 			}

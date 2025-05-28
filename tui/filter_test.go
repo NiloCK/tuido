@@ -100,6 +100,42 @@ func TestItemHasTag(t *testing.T) {
 			filter:   tuido.NewTag("nonexistent=value"),
 			expected: false,
 		},
+		// New tests for starts-with matching
+		{
+			name:     "partial tag name match - single char",
+			filter:   tuido.NewTag("d"),
+			expected: true, // matches "due=2024-01-15"
+		},
+		{
+			name:     "partial tag name match - multiple chars",
+			filter:   tuido.NewTag("du"),
+			expected: true, // matches "due=2024-01-15"
+		},
+		{
+			name:     "partial tag name match - prefix of tag without value",
+			filter:   tuido.NewTag("act"),
+			expected: true, // matches "active"
+		},
+		{
+			name:     "partial tag name match - prefix of project",
+			filter:   tuido.NewTag("proj"),
+			expected: true, // matches "project=work"
+		},
+		{
+			name:     "partial tag name match - single char for important",
+			filter:   tuido.NewTag("i"),
+			expected: true, // matches "important"
+		},
+		{
+			name:     "no partial match - wrong prefix",
+			filter:   tuido.NewTag("xyz"),
+			expected: false,
+		},
+		{
+			name:     "no partial match - longer than existing tag",
+			filter:   tuido.NewTag("activelyworking"),
+			expected: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -155,6 +191,31 @@ func TestItemMatchesAllTags(t *testing.T) {
 			itemText:    "fix bug #due=2024-01-15",
 			tagFilters:  []tuido.Tag{},
 			expected:    true,
+		},
+		// New tests for starts-with matching
+		{
+			name:        "partial tag match - single char",
+			itemText:    "fix bug #due=2024-01-15 #project=work",
+			tagFilters:  []tuido.Tag{tuido.NewTag("d")},
+			expected:    true,
+		},
+		{
+			name:        "partial tag match - multiple chars",
+			itemText:    "fix bug #due=2024-01-15 #project=work",
+			tagFilters:  []tuido.Tag{tuido.NewTag("proj")},
+			expected:    true,
+		},
+		{
+			name:        "multiple partial tag matches",
+			itemText:    "fix bug #due=2024-01-15 #project=work #active",
+			tagFilters:  []tuido.Tag{tuido.NewTag("d"), tuido.NewTag("act")},
+			expected:    true,
+		},
+		{
+			name:        "partial match fails when one doesn't match",
+			itemText:    "fix bug #due=2024-01-15",
+			tagFilters:  []tuido.Tag{tuido.NewTag("d"), tuido.NewTag("proj")},
+			expected:    false,
 		},
 	}
 
@@ -225,6 +286,37 @@ func TestApplyTagFilters(t *testing.T) {
 			tagFilters:     []tuido.Tag{tuido.NewTag("nonexistent")},
 			expectedCount:  0,
 			expectedItems:  []int{},
+		},
+		// New tests for starts-with matching
+		{
+			name:           "partial filter by single char 'd' (matches due)",
+			tagFilters:     []tuido.Tag{tuido.NewTag("d")},
+			expectedCount:  2,
+			expectedItems:  []int{0, 1}, // both have #due tags
+		},
+		{
+			name:           "partial filter by 'proj' (matches project)",
+			tagFilters:     []tuido.Tag{tuido.NewTag("proj")},
+			expectedCount:  3,
+			expectedItems:  []int{0, 1, 2}, // all have #project tags
+		},
+		{
+			name:           "partial filter by 'act' (matches active)",
+			tagFilters:     []tuido.Tag{tuido.NewTag("act")},
+			expectedCount:  2,
+			expectedItems:  []int{2, 3}, // both have #active tags
+		},
+		{
+			name:           "partial filter with multiple chars 'du' (matches due)",
+			tagFilters:     []tuido.Tag{tuido.NewTag("du")},
+			expectedCount:  2,
+			expectedItems:  []int{0, 1}, // both have #due tags
+		},
+		{
+			name:           "partial filter combination",
+			tagFilters:     []tuido.Tag{tuido.NewTag("proj"), tuido.NewTag("act")},
+			expectedCount:  1,
+			expectedItems:  []int{2}, // only item 2 has both project and active
 		},
 	}
 

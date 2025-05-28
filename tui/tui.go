@@ -18,8 +18,15 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/nilock/tuido/tuido"
 	"github.com/nilock/tuido/utils"
+	"github.com/sahilm/fuzzy"
 	walkrepo "github.com/nilock/walk-repo"
 )
+
+// Filter query structures for multi-modal tag + fuzzy search
+type filterQuery struct {
+	tagFilters []tuido.Tag
+	fuzzyTerms []string
+}
 
 func Run() {
 	wrkdirStr, err := os.Getwd() // [ ] only from cli flag? YES! or... follow .gitignore
@@ -300,34 +307,140 @@ func (t *tui) populateRenderSelection() {
 	}
 
 	t.applyFilter()
-	sortItems(t.renderSelection)
+	
+	// Only sort if no filter is active - preserve fuzzy search ranking
+	if len(t.filter.Value()) == 0 {
+		sortItems(t.renderSelection)
+	}
+	
 	// ensure the previous selection value is still in range
 	t.setSelection(t.selection)
 }
 
 func (t *tui) applyFilter() {
-	filter := t.filter.Value()
-	if len(filter) != 0 {
-		keywords := strings.Fields(filter)
+	query := t.filter.Value()
+	if len(query) == 0 {
+		return
+	}
+	
+	// Parse the query into tag filters and fuzzy terms
+	filterQuery := parseFilterQuery(query)
+	
+	// Start with current selection
+	currentSelection := t.renderSelection
+	
+	// Apply hard tag filtering first
+	if len(filterQuery.tagFilters) > 0 {
+		currentSelection = t.applyTagFilters(currentSelection, filterQuery.tagFilters)
+	}
+	
+	// Apply fuzzy search on remaining terms
+	if len(filterQuery.fuzzyTerms) > 0 {
+		currentSelection = t.applyFuzzySearch(currentSelection, filterQuery.fuzzyTerms)
+	}
+	
+	t.renderSelection = currentSelection
+}
 
-		// display all items in case of a trailing space in the filter
-		if strings.HasSuffix(filter, " ") {
-			keywords = append(keywords, "")
+// parseFilterQuery parses filter input into tag filters and fuzzy search terms
+func parseFilterQuery(input string) filterQuery {
+	tokens := strings.Fields(input)
+	var tagFilters []tuido.Tag
+	var fuzzyTerms []string
+	
+	for _, token := range tokens {
+		if strings.HasPrefix(token, "#") && len(token) > 1 {
+			tagFilters = append(tagFilters, parseTagFilter(token))
+		} else {
+			fuzzyTerms = append(fuzzyTerms, token)
 		}
+	}
+	
+	return filterQuery{tagFilters, fuzzyTerms}
+}
 
-		filtered := []*tuido.Item{}
+// parseTagFilter parses a tag filter token like "#tag" or "#tag=value"
+func parseTagFilter(token string) tuido.Tag {
+	// Remove leading # and use existing NewTag function from tuido package
+	return tuido.NewTag(token[1:])
+}
 
-		for _, item := range t.renderSelection {
-			for _, k := range keywords {
-				if strings.Contains(item.Text(), k) {
-					filtered = append(filtered, item)
-					break
-				}
+// applyFuzzySearch applies fuzzy search to items using the provided terms
+func (t *tui) applyFuzzySearch(items []*tuido.Item, terms []string) []*tuido.Item {
+	currentSelection := items
+	
+	// For each fuzzy term, filter the current selection
+	for _, term := range terms {
+		if len(currentSelection) == 0 {
+			break
+		}
+		
+		// Prepare search targets for fuzzy matching
+		var searchTargets []string
+		for _, item := range currentSelection {
+			searchTargets = append(searchTargets, item.Text())
+		}
+		
+		// Perform fuzzy search on current term
+		matches := fuzzy.Find(term, searchTargets)
+		
+		// Update selection to only include fuzzy matches
+		newSelection := make([]*tuido.Item, len(matches))
+		for i, match := range matches {
+			newSelection[i] = currentSelection[match.Index]
+		}
+		currentSelection = newSelection
+	}
+	
+	return currentSelection
+}
+
+// applyTagFilters filters items based on tag criteria (hard filtering)
+func (t *tui) applyTagFilters(items []*tuido.Item, tagFilters []tuido.Tag) []*tuido.Item {
+	if len(tagFilters) == 0 {
+		return items
+	}
+	
+	var filtered []*tuido.Item
+	
+	for _, item := range items {
+		if itemMatchesAllTags(item, tagFilters) {
+			filtered = append(filtered, item)
+		}
+	}
+	
+	return filtered
+}
+
+// itemMatchesAllTags checks if an item has all required tags (AND logic)
+func itemMatchesAllTags(item *tuido.Item, tagFilters []tuido.Tag) bool {
+	itemTags := item.Tags()
+	
+	for _, filter := range tagFilters {
+		if !itemHasTag(itemTags, filter) {
+			return false // AND logic - all tags must match
+		}
+	}
+	
+	return true
+}
+
+// itemHasTag checks if an item has a specific tag (with optional value matching)
+func itemHasTag(itemTags []tuido.Tag, filter tuido.Tag) bool {
+	for _, tag := range itemTags {
+		// Use starts-with matching for tag names to enable partial matching
+		if strings.HasPrefix(tag.Name(), filter.Name()) {
+			// If filter has no value (just tag name), any value matches
+			if filter.String() == filter.Name() {
+				return true
+			}
+			// If filter has value, tag name must start with filter name AND value must match exactly
+			if tag.String() == filter.String() {
+				return true
 			}
 		}
-
-		t.renderSelection = filtered
 	}
+	return false
 }
 
 func (t tui) Init() tea.Cmd { return tick() }

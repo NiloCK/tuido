@@ -129,7 +129,6 @@ GPL
   - [ ] ignoring current working dir (ie, run only in the write-to directory) `tuido --norecurse`
   - [ ] printing a list to stdout, rather than launching an app. `tuido --print`
   - [ ] viewing and setting config. `tuido --config extensions=xit,md,go,js,ts`
-- [ ] #maybe allow marking items done or obsolete during a pomodoro (closes the pomo)
 - [ ] #maybe mark items [ongoing] when entering a pomo
 - [x] #maybe add a #spent=timespan tag which gets updated on pomo exits & by shorthand
   - [ ] #maybe generate reports on #estimate=x vs #spent=y, categorizing by tag, etc

@@ -137,6 +137,7 @@ func (t tui) View() string {
 			} else {
 				ret += fmt.Sprint(t.pomoTimeRemaining)
 			}
+			ret += "\n\n[x] done  [s] dismiss"
 		} else {
 			ret += t.pomoEditor.View()
 		}

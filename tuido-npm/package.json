@@ -26,7 +26,8 @@
   },
   "homepage": "https://github.com/NiloCK/tuido#readme",
   "dependencies": {
-    "binary-install": "^1.1.0"
+    "binary-install": "^1.1.0",
+    "tar": "^6.0.0"
   },
   "engines": {
     "node": ">=12"

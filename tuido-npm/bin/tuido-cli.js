@@ -65,6 +65,30 @@ try {
   if (!binaryPath) {
     console.error("Error: tuido binary not found. Please try reinstalling the package.");
     console.error("Expected location:", getBinaryPath());
+    
+    // List what directories and files do exist for debugging
+    const packageDir = path.join(__dirname, "..");
+    console.error("\nDebugging information:");
+    console.error(`Package directory: ${packageDir}`);
+    
+    if (fs.existsSync(packageDir)) {
+      const packageContents = fs.readdirSync(packageDir);
+      console.error(`Package contents: ${packageContents.join(", ")}`);
+      
+      const binaryDir = path.join(packageDir, "binary");
+      if (fs.existsSync(binaryDir)) {
+        const binaryContents = fs.readdirSync(binaryDir);
+        console.error(`Binary directory contents: ${binaryContents.join(", ")}`);
+      } else {
+        console.error("Binary directory does not exist");
+      }
+    }
+    
+    console.error("\nTroubleshooting:");
+    console.error("1. Run: npm uninstall tuido && npm install tuido");
+    console.error("2. Check the postinstall output for errors");
+    console.error("3. Manually download from: https://github.com/NiloCK/tuido/releases");
+    
     process.exit(1);
   }
 

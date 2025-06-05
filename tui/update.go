@@ -38,6 +38,9 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				t.mode = configViewer
 				return t, nil
 			}
+			if msg.String() == "u" && len(t.notifs) > 0 {
+				return t, t.setUpgradeMode()
+			}
 			t.mode = navigation
 			return t, nil
 		}
@@ -48,6 +51,10 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.mode = navigation
 			return t, nil
 		}
+	}
+
+	if t.mode == upgrade {
+		return t, t.updateUpgradeModel(msg)
 	}
 
 	if t.mode == peek {

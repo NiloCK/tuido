@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "v0.0.15"
+const version = "v0.0.16"
 const ReleaseURL = "https://github.com/NiloCK/tuido/releases/latest"
 const GitHubAPIURL = "https://api.github.com/repos/NiloCK/tuido/releases/latest"
 
@@ -90,14 +90,14 @@ func GetCurrentPlatformAsset() (*ReleaseAsset, error) {
 	}
 
 	expectedName := BuildAssetName(release.TagName, runtime.GOOS, runtime.GOARCH)
-	
+
 	for _, asset := range release.Assets {
 		if asset.Name == expectedName {
 			return &asset, nil
 		}
 	}
 
-	return nil, fmt.Errorf("no asset found for platform %s/%s (expected: %s)", 
+	return nil, fmt.Errorf("no asset found for platform %s/%s (expected: %s)",
 		runtime.GOOS, runtime.GOARCH, expectedName)
 }
 
@@ -163,7 +163,7 @@ func BuildAssetName(version, goos, goarch string) string {
 	case "386":
 		arch = "386"
 	case "arm":
-		arch = "armv6"  // GoReleaser uses armv6 for arm
+		arch = "armv6" // GoReleaser uses armv6 for arm
 	}
 
 	// Handle OS mappings and file extensions
@@ -171,7 +171,7 @@ func BuildAssetName(version, goos, goarch string) string {
 	ext := ".tar.gz"
 	switch goos {
 	case "windows":
-		ext = ".tar.gz"  // Windows also uses tar.gz in GoReleaser
+		ext = ".tar.gz" // Windows also uses tar.gz in GoReleaser
 	case "darwin":
 		os = "darwin"
 	case "linux":
@@ -230,12 +230,12 @@ func DownloadAsset(asset *ReleaseAsset, filePath string, config *DownloadConfig)
 		}
 
 		lastErr = err
-		
+
 		// Don't retry on context cancellation or file system errors
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			break
 		}
-		
+
 		// Don't retry on file creation errors - these won't be fixed by retrying
 		if strings.Contains(err.Error(), "failed to create output file") {
 			break
@@ -303,9 +303,9 @@ func downloadAssetAttempt(asset *ReleaseAsset, filePath string, config *Download
 			if writeErr != nil {
 				return fmt.Errorf("failed to write to file: %w", writeErr)
 			}
-			
+
 			downloaded += int64(written)
-			
+
 			// Call progress callback if provided
 			if config.OnProgress != nil {
 				config.OnProgress(downloaded, progressContentLength)
@@ -325,7 +325,7 @@ func downloadAssetAttempt(asset *ReleaseAsset, filePath string, config *Download
 	if expectedSize <= 0 {
 		expectedSize = asset.Size
 	}
-	
+
 	if expectedSize > 0 && downloaded != expectedSize {
 		return fmt.Errorf("download incomplete: got %d bytes, expected %d", downloaded, expectedSize)
 	}

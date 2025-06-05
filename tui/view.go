@@ -155,6 +155,9 @@ func (t tui) View() string {
 		controls += "n: new item\ne: edit item\nz: snooze item\n!: escalate item\n1: relax item\np: begin a pomodoro\n\n"
 		controls += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
 		controls += "[tab]: cycle between todo and done tabs\n/: text search and #tag #filtering\n?: enter help\n\n"
+		if len(t.notifs) > 0 {
+			controls += "u: upgrade to latest version\n"
+		}
 		controls += "q: quit"
 
 		txt := lg.NewStyle().Width(28).Align(lg.Left).
@@ -176,6 +179,8 @@ func (t tui) View() string {
 		notifications = lg.NewStyle().Bold(true).Foreground(lg.Color("#ffbbaa")).Render(notifications)
 		
 		return lg.JoinVertical(lg.Left, notifications, lg.JoinHorizontal(lg.Top, "  ", content))
+	case upgrade:
+		return t.renderUpgradeView()
 	case peek:
 		return t.peek.View(t.h, t.w, t.footer)
 	default:

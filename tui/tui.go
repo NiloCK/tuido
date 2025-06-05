@@ -18,8 +18,8 @@ import (
 	"github.com/lucasb-eyer/go-colorful"
 	"github.com/nilock/tuido/tuido"
 	"github.com/nilock/tuido/utils"
-	"github.com/sahilm/fuzzy"
 	walkrepo "github.com/nilock/walk-repo"
+	"github.com/sahilm/fuzzy"
 )
 
 // Filter query structures for multi-modal tag + fuzzy search
@@ -116,7 +116,7 @@ func (t *tui) houseKeeping() {
 
 	if local != curent {
 		t.notifs = append(t.notifs,
-			fmt.Sprintf("New version available: %s. Currently running %s. \nUpdates at %s",
+			fmt.Sprintf("New version available: %s. Currently running %s. \nPress 'u' to upgrade, or visit %s for more info",
 				curent, local, utils.ReleaseURL))
 	}
 
@@ -159,6 +159,7 @@ const (
 	nag
 	peek
 	configViewer
+	upgrade
 )
 
 type tui struct {
@@ -189,8 +190,9 @@ type tui struct {
 	// pomoTimeSet is the original time set by the user
 	pomoTimeSet int
 
-	nag  nagScreen
-	peek peekScreen
+	nag     nagScreen
+	peek    peekScreen
+	upgrade upgradeModel
 
 	tagColors map[string]lg.Style
 
@@ -308,12 +310,12 @@ func (t *tui) populateRenderSelection() {
 	}
 
 	t.applyFilter()
-	
+
 	// Only sort if no filter is active - preserve fuzzy search ranking
 	if len(t.filter.Value()) == 0 {
 		sortItems(t.renderSelection)
 	}
-	
+
 	// ensure the previous selection value is still in range
 	t.setSelection(t.selection)
 }
@@ -323,23 +325,23 @@ func (t *tui) applyFilter() {
 	if len(query) == 0 {
 		return
 	}
-	
+
 	// Parse the query into tag filters and fuzzy terms
 	filterQuery := parseFilterQuery(query)
-	
+
 	// Start with current selection
 	currentSelection := t.renderSelection
-	
+
 	// Apply hard tag filtering first
 	if len(filterQuery.tagFilters) > 0 {
 		currentSelection = t.applyTagFilters(currentSelection, filterQuery.tagFilters)
 	}
-	
+
 	// Apply fuzzy search on remaining terms
 	if len(filterQuery.fuzzyTerms) > 0 {
 		currentSelection = t.applyFuzzySearch(currentSelection, filterQuery.fuzzyTerms)
 	}
-	
+
 	t.renderSelection = currentSelection
 }
 
@@ -348,7 +350,7 @@ func parseFilterQuery(input string) filterQuery {
 	tokens := strings.Fields(input)
 	var tagFilters []tuido.Tag
 	var fuzzyTerms []string
-	
+
 	for _, token := range tokens {
 		if strings.HasPrefix(token, "#") && len(token) > 1 {
 			tagFilters = append(tagFilters, parseTagFilter(token))
@@ -356,7 +358,7 @@ func parseFilterQuery(input string) filterQuery {
 			fuzzyTerms = append(fuzzyTerms, token)
 		}
 	}
-	
+
 	return filterQuery{tagFilters, fuzzyTerms}
 }
 
@@ -369,22 +371,22 @@ func parseTagFilter(token string) tuido.Tag {
 // applyFuzzySearch applies fuzzy search to items using the provided terms
 func (t *tui) applyFuzzySearch(items []*tuido.Item, terms []string) []*tuido.Item {
 	currentSelection := items
-	
+
 	// For each fuzzy term, filter the current selection
 	for _, term := range terms {
 		if len(currentSelection) == 0 {
 			break
 		}
-		
+
 		// Prepare search targets for fuzzy matching
 		var searchTargets []string
 		for _, item := range currentSelection {
 			searchTargets = append(searchTargets, item.Text())
 		}
-		
+
 		// Perform fuzzy search on current term
 		matches := fuzzy.Find(term, searchTargets)
-		
+
 		// Update selection to only include fuzzy matches
 		newSelection := make([]*tuido.Item, len(matches))
 		for i, match := range matches {
@@ -392,7 +394,7 @@ func (t *tui) applyFuzzySearch(items []*tuido.Item, terms []string) []*tuido.Ite
 		}
 		currentSelection = newSelection
 	}
-	
+
 	return currentSelection
 }
 
@@ -401,28 +403,28 @@ func (t *tui) applyTagFilters(items []*tuido.Item, tagFilters []tuido.Tag) []*tu
 	if len(tagFilters) == 0 {
 		return items
 	}
-	
+
 	var filtered []*tuido.Item
-	
+
 	for _, item := range items {
 		if itemMatchesAllTags(item, tagFilters) {
 			filtered = append(filtered, item)
 		}
 	}
-	
+
 	return filtered
 }
 
 // itemMatchesAllTags checks if an item has all required tags (AND logic)
 func itemMatchesAllTags(item *tuido.Item, tagFilters []tuido.Tag) bool {
 	itemTags := item.Tags()
-	
+
 	for _, filter := range tagFilters {
 		if !itemHasTag(itemTags, filter) {
 			return false // AND logic - all tags must match
 		}
 	}
-	
+
 	return true
 }
 

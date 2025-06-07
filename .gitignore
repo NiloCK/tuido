@@ -1,2 +1,8 @@
 # the name of my test builds
 td
+
+node_modules
+
+# npm package build artifacts
+tuido-npm/binary/
+tuido-npm/node_modules/

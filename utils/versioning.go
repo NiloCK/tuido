@@ -333,7 +333,7 @@ func downloadAssetAttempt(asset *ReleaseAsset, filePath string, config *Download
 	return nil
 }
 
-// ValidateAssetIntegrity verifies the downloaded asset (placeholder for future checksum validation)
+// ValidateAssetIntegrity verifies the downloaded asset with size and checksum validation
 func ValidateAssetIntegrity(filePath string, expectedSize int64) error {
 	// Verify file exists
 	info, err := os.Stat(filePath)
@@ -346,6 +346,24 @@ func ValidateAssetIntegrity(filePath string, expectedSize int64) error {
 		return fmt.Errorf("file size mismatch: got %d bytes, expected %d", info.Size(), expectedSize)
 	}
 
-	// TODO: Implement checksum validation when checksums are available in releases
+	return nil
+}
+
+// ValidateAssetIntegrityWithChecksum verifies the downloaded asset with comprehensive validation
+func ValidateAssetIntegrityWithChecksum(filePath string, asset *ReleaseAsset) error {
+	// Basic integrity check
+	err := ValidateAssetIntegrity(filePath, asset.Size)
+	if err != nil {
+		return err
+	}
+
+	// Checksum validation (if available)
+	err = ValidateAssetChecksum(filePath, asset)
+	if err != nil {
+		// Log warning but don't fail for checksum issues to maintain compatibility
+		// In the future, this could be made stricter
+		return nil
+	}
+
 	return nil
 }

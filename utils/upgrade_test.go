@@ -1,6 +1,8 @@
 package utils_test
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"os"
@@ -149,10 +151,12 @@ func TestBusyExecutableError(t *testing.T) {
 func TestExtractExecutableFromArchive(t *testing.T) {
 	tempDir := t.TempDir()
 	
-	// Create a mock "archive" (just a file for testing)
+	// Create a proper tar.gz archive with executable
 	archivePath := filepath.Join(tempDir, "mock_archive.tar.gz")
 	mockContent := "mock executable content"
-	err := os.WriteFile(archivePath, []byte(mockContent), 0644)
+	
+	// Create the tar.gz archive
+	err := createMockTarGz(archivePath, mockContent)
 	if err != nil {
 		t.Fatalf("Failed to create mock archive: %v", err)
 	}
@@ -187,6 +191,46 @@ func TestExtractExecutableFromArchive(t *testing.T) {
 	if filepath.Base(extractedPath) != expectedName {
 		t.Errorf("Expected extracted file name %s, got %s", expectedName, filepath.Base(extractedPath))
 	}
+}
+
+// createMockTarGz creates a proper tar.gz archive containing the tuido executable
+func createMockTarGz(archivePath, content string) error {
+	file, err := os.Create(archivePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	// Create gzip writer
+	gzipWriter := gzip.NewWriter(file)
+	defer gzipWriter.Close()
+
+	// Create tar writer
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	// Determine executable name for this platform
+	execName := "tuido"
+	if runtime.GOOS == "windows" {
+		execName = "tuido.exe"
+	}
+
+	// Create tar header for the executable
+	header := &tar.Header{
+		Name: execName,
+		Mode: 0755,
+		Size: int64(len(content)),
+	}
+
+	// Write header
+	err = tarWriter.WriteHeader(header)
+	if err != nil {
+		return err
+	}
+
+	// Write file content
+	_, err = tarWriter.Write([]byte(content))
+	return err
 }
 
 func TestCleanupBackups(t *testing.T) {

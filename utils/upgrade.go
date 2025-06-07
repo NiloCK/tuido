@@ -1,8 +1,11 @@
 package utils
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -320,29 +323,85 @@ func GetBusyExecutableInfo(err error) (currentPath, newPath string, ok bool) {
 
 // ExtractExecutableFromArchive extracts the executable from a tar.gz archive
 func ExtractExecutableFromArchive(archivePath, extractDir string) (string, error) {
-	// For now, this is a placeholder. In a real implementation, you would:
-	// 1. Open the tar.gz file
-	// 2. Find the executable inside (usually the file without extension on Unix, .exe on Windows)
-	// 3. Extract it to extractDir
-	// 4. Return the path to the extracted executable
-
-	// Since this is a complex implementation and tar.gz handling would require
-	// additional dependencies, we'll implement a simplified version that
-	// assumes the downloaded file is already the executable for testing purposes
-	
-	extractedPath := filepath.Join(extractDir, "tuido")
-	if runtime.GOOS == "windows" {
-		extractedPath += ".exe"
-	}
-
-	// For now, just copy the "archive" as the executable
-	// TODO: Implement proper tar.gz extraction
-	err := CopyFile(archivePath, extractedPath)
+	// Open the tar.gz file
+	file, err := os.Open(archivePath)
 	if err != nil {
-		return "", fmt.Errorf("failed to extract executable: %w", err)
+		return "", fmt.Errorf("failed to open archive: %w", err)
+	}
+	defer file.Close()
+
+	// Create gzip reader
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		return "", fmt.Errorf("failed to create gzip reader: %w", err)
+	}
+	defer gzipReader.Close()
+
+	// Create tar reader
+	tarReader := tar.NewReader(gzipReader)
+
+	// Determine the expected executable name for this platform
+	expectedExecutable := "tuido"
+	if runtime.GOOS == "windows" {
+		expectedExecutable = "tuido.exe"
 	}
 
-	return extractedPath, nil
+	// Extract the executable
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break // End of archive
+		}
+		if err != nil {
+			return "", fmt.Errorf("failed to read tar header: %w", err)
+		}
+
+		// Skip directories and non-regular files
+		if header.Typeflag != tar.TypeReg {
+			continue
+		}
+
+		// Check if this is the executable we're looking for
+		fileName := filepath.Base(header.Name)
+		if fileName != expectedExecutable {
+			continue
+		}
+
+		// Found the executable - extract it
+		extractedPath := filepath.Join(extractDir, expectedExecutable)
+		
+		// Create the output file
+		outFile, err := os.Create(extractedPath)
+		if err != nil {
+			return "", fmt.Errorf("failed to create extracted file: %w", err)
+		}
+
+		// Copy the file content
+		_, err = io.Copy(outFile, tarReader)
+		outFile.Close()
+		if err != nil {
+			os.Remove(extractedPath) // Clean up on error
+			return "", fmt.Errorf("failed to extract file content: %w", err)
+		}
+
+		// Set executable permissions (preserve from archive, but ensure executable)
+		mode := os.FileMode(header.Mode)
+		if mode == 0 {
+			// Default to 755 if no mode specified
+			mode = 0755
+		}
+		// Ensure owner execute bit is set
+		mode |= 0100
+		
+		err = os.Chmod(extractedPath, mode)
+		if err != nil {
+			return "", fmt.Errorf("failed to set executable permissions: %w", err)
+		}
+
+		return extractedPath, nil
+	}
+
+	return "", fmt.Errorf("executable '%s' not found in archive", expectedExecutable)
 }
 
 // CleanupBackups removes old backup files

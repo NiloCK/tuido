@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -53,6 +54,12 @@ type UpgradeResult struct {
 	RestartRequired bool
 	// Any error that occurred
 	Error error
+	// Path to the log file with detailed information
+	LogFile string
+	// Whether rollback was performed
+	RolledBack bool
+	// Detailed error message for user display
+	UserMessage string
 }
 
 // PerformUpgrade downloads and replaces the current executable with a new version
@@ -63,24 +70,48 @@ func PerformUpgrade(config *UpgradeConfig) *UpgradeResult {
 
 	result := &UpgradeResult{}
 
+	// Setup logging
+	logFile, logger := setupUpgradeLogging()
+	result.LogFile = logFile
+	logger.Printf("Starting upgrade process...")
+
 	// Get current executable path
 	currentExePath, err := os.Executable()
 	if err != nil {
 		result.Error = fmt.Errorf("failed to get current executable path: %w", err)
+		result.UserMessage = "Unable to locate current executable"
+		logger.Printf("Error: %v", result.Error)
 		return result
 	}
+	logger.Printf("Current executable: %s", currentExePath)
 
 	// Get current platform asset
 	asset, err := GetCurrentPlatformAsset()
 	if err != nil {
 		result.Error = fmt.Errorf("failed to get platform asset: %w", err)
+		result.UserMessage = "Unable to determine platform-specific download"
+		logger.Printf("Error: %v", result.Error)
 		return result
 	}
+	logger.Printf("Platform asset: %s (%d bytes)", asset.Name, asset.Size)
+
+	// Create backup before any modifications
+	backupPath, err := createBackup(currentExePath, config, logger)
+	if err != nil {
+		result.Error = fmt.Errorf("failed to create backup: %w", err)
+		result.UserMessage = "Unable to create backup of current version"
+		logger.Printf("Error: %v", result.Error)
+		return result
+	}
+	result.BackupPath = backupPath
+	logger.Printf("Backup created: %s", backupPath)
 
 	// Create temporary directory for download
 	tempDir, err := os.MkdirTemp("", "tuido-upgrade-*")
 	if err != nil {
 		result.Error = fmt.Errorf("failed to create temp directory: %w", err)
+		result.UserMessage = "Unable to create temporary directory"
+		logger.Printf("Error: %v", result.Error)
 		return result
 	}
 	defer os.RemoveAll(tempDir)
@@ -91,41 +122,62 @@ func PerformUpgrade(config *UpgradeConfig) *UpgradeResult {
 		downloadPath += ".exe"
 	}
 
+	logger.Printf("Downloading asset to: %s", downloadPath)
 	err = DownloadAsset(asset, downloadPath, config.DownloadConfig)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to download asset: %w", err)
-		return result
+		result.UserMessage = "Download failed"
+		logger.Printf("Error: %v", result.Error)
+		return performRollback(result, currentExePath, backupPath, logger)
 	}
 
 	// Validate the downloaded asset with comprehensive validation
+	logger.Printf("Validating downloaded asset...")
 	err = ValidateAssetIntegrityWithChecksum(downloadPath, asset)
 	if err != nil {
 		result.Error = fmt.Errorf("downloaded asset failed validation: %w", err)
-		return result
+		result.UserMessage = "Downloaded file failed integrity checks"
+		logger.Printf("Error: %v", result.Error)
+		return performRollback(result, currentExePath, backupPath, logger)
 	}
 
 	// Extract executable from archive (since assets are tar.gz)
+	logger.Printf("Extracting executable from archive...")
 	extractedPath, err := ExtractExecutableFromArchive(downloadPath, tempDir)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to extract executable: %w", err)
-		return result
+		result.UserMessage = "Archive extraction failed"
+		logger.Printf("Error: %v", result.Error)
+		return performRollback(result, currentExePath, backupPath, logger)
 	}
 
 	// Perform the replacement
+	logger.Printf("Replacing executable: %s -> %s", extractedPath, currentExePath)
 	err = ReplaceExecutable(currentExePath, extractedPath, config)
 	if err != nil {
 		result.Error = fmt.Errorf("failed to replace executable: %w", err)
-		return result
+		result.UserMessage = "File replacement failed"
+		logger.Printf("Error: %v", result.Error)
+		return performRollback(result, currentExePath, backupPath, logger)
+	}
+
+	// Validate the replaced executable
+	logger.Printf("Validating replaced executable...")
+	err = ValidateExtractedBinary(currentExePath)
+	if err != nil {
+		result.Error = fmt.Errorf("replaced executable failed validation: %w", err)
+		result.UserMessage = "New executable failed validation"
+		logger.Printf("Error: %v", result.Error)
+		return performRollback(result, currentExePath, backupPath, logger)
 	}
 
 	result.Success = true
 	result.NewExecutablePath = currentExePath
 	result.RestartRequired = true
+	result.BackupPath = backupPath
+	result.UserMessage = "Upgrade completed successfully"
 
-	if config.CreateBackup {
-		result.BackupPath = currentExePath + config.BackupSuffix
-	}
-
+	logger.Printf("Upgrade completed successfully")
 	return result
 }
 
@@ -787,4 +839,114 @@ func RestoreFromBackup(executablePath, backupPath string) error {
 	}
 
 	return nil
+}
+
+// setupUpgradeLogging creates a log file for upgrade operations
+func setupUpgradeLogging() (string, *log.Logger) {
+	return SetupUpgradeLoggingForTesting()
+}
+
+// SetupUpgradeLoggingForTesting creates a log file for upgrade operations (exported for testing)
+func SetupUpgradeLoggingForTesting() (string, *log.Logger) {
+	// Create logs directory if it doesn't exist
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		// Fallback to temp directory
+		homeDir = os.TempDir()
+	}
+	
+	logDir := filepath.Join(homeDir, ".tuido", "logs")
+	os.MkdirAll(logDir, 0755)
+	
+	// Create log file with timestamp
+	timestamp := time.Now().Format("20060102_150405")
+	logFile := filepath.Join(logDir, fmt.Sprintf("upgrade_%s.log", timestamp))
+	
+	file, err := os.Create(logFile)
+	if err != nil {
+		// Fallback to temp file
+		logFile = filepath.Join(os.TempDir(), fmt.Sprintf("tuido_upgrade_%s.log", timestamp))
+		file, _ = os.Create(logFile)
+	}
+	
+	logger := log.New(file, "", log.LstdFlags|log.Lshortfile)
+	return logFile, logger
+}
+
+// createBackup creates a backup of the current executable
+func createBackup(executablePath string, config *UpgradeConfig, logger *log.Logger) (string, error) {
+	return CreateBackupForTesting(executablePath, config, logger)
+}
+
+// CreateBackupForTesting creates a backup of the current executable (exported for testing)
+func CreateBackupForTesting(executablePath string, config *UpgradeConfig, logger *log.Logger) (string, error) {
+	if !config.CreateBackup {
+		return "", nil
+	}
+
+	// Generate backup path with timestamp
+	timestamp := time.Now().Format("20060102_150405")
+	backupPath := executablePath + "." + timestamp + config.BackupSuffix
+	
+	logger.Printf("Creating backup: %s -> %s", executablePath, backupPath)
+	
+	err := CopyFile(executablePath, backupPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to create backup: %w", err)
+	}
+	
+	// Verify backup integrity
+	originalInfo, err := os.Stat(executablePath)
+	if err != nil {
+		return "", fmt.Errorf("failed to stat original file: %w", err)
+	}
+	
+	backupInfo, err := os.Stat(backupPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to stat backup file: %w", err)
+	}
+	
+	if originalInfo.Size() != backupInfo.Size() {
+		os.Remove(backupPath)
+		return "", fmt.Errorf("backup size mismatch: original=%d, backup=%d", originalInfo.Size(), backupInfo.Size())
+	}
+	
+	logger.Printf("Backup verified: %d bytes", backupInfo.Size())
+	return backupPath, nil
+}
+
+// performRollback performs automatic rollback on upgrade failure
+func performRollback(result *UpgradeResult, executablePath, backupPath string, logger *log.Logger) *UpgradeResult {
+	return PerformRollbackForTesting(result, executablePath, backupPath, logger)
+}
+
+// PerformRollbackForTesting performs automatic rollback on upgrade failure (exported for testing)
+func PerformRollbackForTesting(result *UpgradeResult, executablePath, backupPath string, logger *log.Logger) *UpgradeResult {
+	if backupPath == "" {
+		logger.Printf("No backup available for rollback")
+		return result
+	}
+	
+	logger.Printf("Performing automatic rollback...")
+	
+	err := RestoreFromBackup(executablePath, backupPath)
+	if err != nil {
+		logger.Printf("Rollback failed: %v", err)
+		result.UserMessage += " (Rollback also failed - manual recovery required)"
+		return result
+	}
+	
+	// Verify rollback was successful
+	err = ValidateExtractedBinary(executablePath)
+	if err != nil {
+		logger.Printf("Rollback validation failed: %v", err)
+		result.UserMessage += " (Rollback validation failed)"
+		return result
+	}
+	
+	result.RolledBack = true
+	result.UserMessage = "Error during upgrade. Staying on current version"
+	logger.Printf("Rollback completed successfully")
+	
+	return result
 }

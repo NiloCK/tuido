@@ -32,6 +32,9 @@ type upgradeModel struct {
 	downloaded      int64
 	total           int64
 	errorMessage    string
+	userMessage     string
+	logFile         string
+	rolledBack      bool
 	manualCommands  []string
 	cancelContext   context.Context
 	cancelFunc      context.CancelFunc
@@ -166,11 +169,24 @@ func (t *tui) updateUpgradeModel(msg tea.Msg) tea.Cmd {
 			t.upgrade.state = upgradeSuccess
 		} else {
 			t.upgrade.state = upgradeError
-			if msg.result != nil && msg.result.Error != nil {
-				t.upgrade.errorMessage = msg.result.Error.Error()
+			if msg.result != nil {
+				// Set user-friendly message and log file info
+				if msg.result.UserMessage != "" {
+					t.upgrade.userMessage = msg.result.UserMessage
+				} else {
+					t.upgrade.userMessage = "Upgrade failed"
+				}
+				
+				t.upgrade.logFile = msg.result.LogFile
+				t.upgrade.rolledBack = msg.result.RolledBack
+				
+				// Set technical error message
+				if msg.result.Error != nil {
+					t.upgrade.errorMessage = msg.result.Error.Error()
+				}
 				
 				// Check if it's a busy executable error requiring manual steps
-				if utils.IsBusyExecutableError(msg.result.Error) {
+				if msg.result.Error != nil && utils.IsBusyExecutableError(msg.result.Error) {
 					t.upgrade.state = upgradeManualInstructions
 					currentPath, newPath, _ := utils.GetBusyExecutableInfo(msg.result.Error)
 					t.upgrade.manualCommands = []string{
@@ -315,6 +331,15 @@ func (t *tui) renderUpgradeSuccess() string {
 		Margin(1, 0).
 		Render(fmt.Sprintf("Successfully upgraded to %s", t.upgrade.targetVersion))
 
+	// Show backup information if available
+	var backupInfo string
+	if t.upgrade.logFile != "" {
+		backupInfo = lg.NewStyle().
+			Margin(1, 0).
+			Faint(true).
+			Render("Previous version backed up. See log for details.")
+	}
+
 	restartPrompt := lg.NewStyle().
 		Margin(1, 0).
 		Render("The upgrade is complete. Restart is recommended.")
@@ -324,7 +349,14 @@ func (t *tui) renderUpgradeSuccess() string {
 		Margin(1, 0).
 		Render("[r] Restart tuido  [enter] Continue with current session")
 
-	content := lg.JoinVertical(lg.Left, title, info, restartPrompt, controls)
+	var parts []string
+	parts = append(parts, title, info)
+	if backupInfo != "" {
+		parts = append(parts, backupInfo)
+	}
+	parts = append(parts, restartPrompt, controls)
+
+	content := lg.JoinVertical(lg.Left, parts...)
 
 	return lg.NewStyle().
 		Align(lg.Left).
@@ -335,15 +367,50 @@ func (t *tui) renderUpgradeSuccess() string {
 
 // renderUpgradeError renders upgrade error information
 func (t *tui) renderUpgradeError() string {
-	title := lg.NewStyle().
-		Bold(true).
-		Foreground(lg.Color("#ff0000")).
-		Render("✗ Upgrade Failed")
+	var title string
+	if t.upgrade.rolledBack {
+		title = lg.NewStyle().
+			Bold(true).
+			Foreground(lg.Color("#ffaa00")).
+			Render("⚠ Upgrade Failed - Rolled Back")
+	} else {
+		title = lg.NewStyle().
+			Bold(true).
+			Foreground(lg.Color("#ff0000")).
+			Render("✗ Upgrade Failed")
+	}
 
-	errorInfo := lg.NewStyle().
+	// User-friendly message
+	userMessage := t.upgrade.userMessage
+	if userMessage == "" {
+		userMessage = "An error occurred during upgrade"
+	}
+	
+	if t.upgrade.rolledBack {
+		userMessage = "Error during upgrade. Staying on current version."
+	}
+
+	userInfo := lg.NewStyle().
 		Margin(1, 0).
-		Foreground(lg.Color("#ff6666")).
-		Render("Error: " + t.upgrade.errorMessage)
+		Render(userMessage)
+
+	// Log file information
+	var logInfo string
+	if t.upgrade.logFile != "" {
+		logInfo = lg.NewStyle().
+			Margin(1, 0).
+			Faint(true).
+			Render(fmt.Sprintf("See %s for details", t.upgrade.logFile))
+	}
+
+	// Technical error (if available)
+	var technicalInfo string
+	if t.upgrade.errorMessage != "" {
+		technicalInfo = lg.NewStyle().
+			Margin(1, 0).
+			Foreground(lg.Color("#666666")).
+			Render("Technical details: " + t.upgrade.errorMessage)
+	}
 
 	suggestion := lg.NewStyle().
 		Margin(1, 0).
@@ -354,7 +421,17 @@ func (t *tui) renderUpgradeError() string {
 		Margin(1, 0).
 		Render("[enter] Continue  [esc] Return to navigation")
 
-	content := lg.JoinVertical(lg.Left, title, errorInfo, suggestion, controls)
+	var parts []string
+	parts = append(parts, title, userInfo)
+	if logInfo != "" {
+		parts = append(parts, logInfo)
+	}
+	if technicalInfo != "" {
+		parts = append(parts, technicalInfo)
+	}
+	parts = append(parts, suggestion, controls)
+
+	content := lg.JoinVertical(lg.Left, parts...)
 
 	return lg.NewStyle().
 		Align(lg.Left).

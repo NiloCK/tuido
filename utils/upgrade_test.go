@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -440,6 +441,273 @@ func createEmptyTarGz(archivePath string) error {
 
 	// Create empty archive - no files added
 	return nil
+}
+
+func TestCreateBackup(t *testing.T) {
+	tempDir := t.TempDir()
+	
+	// Create a mock executable
+	executablePath := filepath.Join(tempDir, "tuido")
+	originalContent := "original executable content"
+	err := os.WriteFile(executablePath, []byte(originalContent), 0755)
+	if err != nil {
+		t.Fatalf("Failed to create test executable: %v", err)
+	}
+	
+	// Create config with backup enabled
+	config := utils.DefaultUpgradeConfig()
+	config.CreateBackup = true
+	
+	// Setup basic logging
+	logFile := filepath.Join(tempDir, "test.log")
+	file, err := os.Create(logFile)
+	if err != nil {
+		t.Fatalf("Failed to create log file: %v", err)
+	}
+	logger := log.New(file, "", log.LstdFlags)
+	file.Close()
+	
+	// Test backup creation
+	backupPath, err := utils.CreateBackupForTesting(executablePath, config, logger)
+	if err != nil {
+		t.Fatalf("CreateBackup failed: %v", err)
+	}
+	
+	if backupPath == "" {
+		t.Error("Expected backup path but got empty string")
+	}
+	
+	// Verify backup file exists
+	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+		t.Error("Backup file does not exist")
+	}
+	
+	// Verify backup content matches original
+	backupContent, err := os.ReadFile(backupPath)
+	if err != nil {
+		t.Fatalf("Failed to read backup file: %v", err)
+	}
+	
+	if string(backupContent) != originalContent {
+		t.Errorf("Backup content doesn't match original")
+	}
+	
+	// Test with backup disabled
+	config.CreateBackup = false
+	backupPath2, err := utils.CreateBackupForTesting(executablePath, config, logger)
+	if err != nil {
+		t.Fatalf("CreateBackup failed with backup disabled: %v", err)
+	}
+	
+	if backupPath2 != "" {
+		t.Error("Expected empty backup path when backup disabled")
+	}
+}
+
+func TestPerformRollback(t *testing.T) {
+	tempDir := t.TempDir()
+	
+	// Create original executable and backup
+	executablePath := filepath.Join(tempDir, "tuido")
+	backupPath := filepath.Join(tempDir, "tuido.backup")
+	
+	// Create proper binary content for current platform
+	var originalContent []byte
+	switch runtime.GOOS {
+	case "linux":
+		originalContent = []byte{0x7f, 0x45, 0x4c, 0x46} // ELF header
+	case "darwin":
+		originalContent = []byte{0xfe, 0xed, 0xfa, 0xce} // Mach-O header
+	case "windows":
+		originalContent = []byte{0x4d, 0x5a, 0x00, 0x00} // PE header
+	default:
+		originalContent = []byte{0x00, 0x01, 0x02, 0x03} // Generic binary
+	}
+	
+	// Pad to minimum size
+	originalContentString := string(originalContent) + "original executable content for rollback test"
+	for len(originalContentString) < 100000 {
+		originalContentString += "padding"
+	}
+	originalContent = []byte(originalContentString)
+	
+	corruptContent := "corrupted content"
+	
+	// Create backup with original content
+	err := os.WriteFile(backupPath, originalContent, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create backup file: %v", err)
+	}
+	
+	// Create corrupted executable
+	err = os.WriteFile(executablePath, []byte(corruptContent), 0755)
+	if err != nil {
+		t.Fatalf("Failed to create corrupted executable: %v", err)
+	}
+	
+	// Setup logging
+	logFile := filepath.Join(tempDir, "rollback.log")
+	file, err := os.Create(logFile)
+	if err != nil {
+		t.Fatalf("Failed to create log file: %v", err)
+	}
+	logger := log.New(file, "", log.LstdFlags)
+	file.Close()
+	
+	// Create initial result
+	result := &utils.UpgradeResult{
+		Error: fmt.Errorf("test upgrade failure"),
+		UserMessage: "Test failure",
+	}
+	
+	// Test rollback
+	rolledBackResult := utils.PerformRollbackForTesting(result, executablePath, backupPath, logger)
+	
+	if !rolledBackResult.RolledBack {
+		t.Error("Expected RolledBack to be true")
+	}
+	
+	if rolledBackResult.UserMessage != "Error during upgrade. Staying on current version" {
+		t.Errorf("Unexpected user message: %s", rolledBackResult.UserMessage)
+	}
+	
+	// Verify executable was restored
+	restoredContent, err := os.ReadFile(executablePath)
+	if err != nil {
+		t.Fatalf("Failed to read restored executable: %v", err)
+	}
+	
+	if string(restoredContent) != string(originalContent) {
+		t.Error("Executable was not properly restored from backup")
+	}
+	
+	// Test rollback with no backup
+	noBackupResult := &utils.UpgradeResult{
+		Error: fmt.Errorf("test failure"),
+		UserMessage: "Test failure",
+	}
+	
+	rolledBackResult2 := utils.PerformRollbackForTesting(noBackupResult, executablePath, "", logger)
+	
+	if rolledBackResult2.RolledBack {
+		t.Error("Expected RolledBack to be false when no backup available")
+	}
+}
+
+func TestSetupUpgradeLogging(t *testing.T) {
+	// Test logging setup
+	logFile, logger := utils.SetupUpgradeLoggingForTesting()
+	
+	if logFile == "" {
+		t.Error("Expected log file path but got empty string")
+	}
+	
+	if logger == nil {
+		t.Error("Expected logger but got nil")
+	}
+	
+	// Test that we can write to the log
+	logger.Printf("Test log message")
+	
+	// Verify log file exists
+	if _, err := os.Stat(logFile); os.IsNotExist(err) {
+		t.Error("Log file does not exist")
+	}
+	
+	// Clean up
+	os.Remove(logFile)
+}
+
+func TestUpgradeWithRollback(t *testing.T) {
+	tempDir := t.TempDir()
+	
+	// Create a mock executable that will be "upgraded"
+	executablePath := filepath.Join(tempDir, "tuido")
+	originalContent := "original executable content"
+	
+	// Create proper binary header for platform
+	var binaryContent []byte
+	switch runtime.GOOS {
+	case "linux":
+		binaryContent = []byte{0x7f, 0x45, 0x4c, 0x46} // ELF header
+	case "darwin":
+		binaryContent = []byte{0xfe, 0xed, 0xfa, 0xce} // Mach-O header
+	case "windows":
+		binaryContent = []byte{0x4d, 0x5a, 0x00, 0x00} // PE header
+	default:
+		binaryContent = []byte{0x00, 0x01, 0x02, 0x03} // Generic binary
+	}
+	
+	// Pad to minimum size and add original identifier
+	fullContent := string(binaryContent) + originalContent
+	for len(fullContent) < 100000 {
+		fullContent += "padding"
+	}
+	
+	err := os.WriteFile(executablePath, []byte(fullContent), 0755)
+	if err != nil {
+		t.Fatalf("Failed to create test executable: %v", err)
+	}
+	
+	// Test scenarios where rollback should occur:
+	// 1. Simulated download failure (by providing invalid asset)
+	// 2. Simulated validation failure
+	// 3. Simulated extraction failure
+	
+	// This is more of an integration test concept - individual components
+	// are tested above. The full upgrade with rollback would require
+	// more complex mocking of the download/extraction process.
+	
+	// For now, verify that our backup functions work correctly
+	config := utils.DefaultUpgradeConfig()
+	config.CreateBackup = true
+	
+	logFile := filepath.Join(tempDir, "upgrade_test.log")
+	file, err := os.Create(logFile)
+	if err != nil {
+		t.Fatalf("Failed to create log file: %v", err)
+	}
+	logger := log.New(file, "", log.LstdFlags)
+	file.Close()
+	
+	// Test backup creation
+	backupPath, err := utils.CreateBackupForTesting(executablePath, config, logger)
+	if err != nil {
+		t.Fatalf("Backup creation failed: %v", err)
+	}
+	
+	// Verify backup was created
+	if _, err := os.Stat(backupPath); os.IsNotExist(err) {
+		t.Error("Backup file was not created")
+	}
+	
+	// Simulate corruption and test rollback
+	err = os.WriteFile(executablePath, []byte("corrupted"), 0755)
+	if err != nil {
+		t.Fatalf("Failed to corrupt executable: %v", err)
+	}
+	
+	result := &utils.UpgradeResult{
+		Error: fmt.Errorf("simulated upgrade failure"),
+		UserMessage: "Simulated failure",
+		BackupPath: backupPath,
+	}
+	
+	rolledBackResult := utils.PerformRollbackForTesting(result, executablePath, backupPath, logger)
+	
+	if !rolledBackResult.RolledBack {
+		t.Error("Expected rollback to occur")
+	}
+	
+	// Verify restoration
+	restoredContent, err := os.ReadFile(executablePath)
+	if err != nil {
+		t.Fatalf("Failed to read restored file: %v", err)
+	}
+	
+	if string(restoredContent) != fullContent {
+		t.Error("File was not properly restored from backup")
+	}
 }
 
 func TestCleanupBackups(t *testing.T) {

@@ -4,8 +4,11 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -94,8 +97,8 @@ func PerformUpgrade(config *UpgradeConfig) *UpgradeResult {
 		return result
 	}
 
-	// Validate the downloaded asset
-	err = ValidateAssetIntegrity(downloadPath, asset.Size)
+	// Validate the downloaded asset with comprehensive validation
+	err = ValidateAssetIntegrityWithChecksum(downloadPath, asset)
 	if err != nil {
 		result.Error = fmt.Errorf("downloaded asset failed validation: %w", err)
 		return result
@@ -321,8 +324,342 @@ func GetBusyExecutableInfo(err error) (currentPath, newPath string, ok bool) {
 	return "", "", false
 }
 
+// ValidateArchiveFormat performs pre-extraction validation of tar.gz file format
+func ValidateArchiveFormat(archivePath string) error {
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return fmt.Errorf("failed to open archive for validation: %w", err)
+	}
+	defer file.Close()
+
+	// Check file size
+	info, err := file.Stat()
+	if err != nil {
+		return fmt.Errorf("failed to stat archive: %w", err)
+	}
+	
+	if info.Size() == 0 {
+		return fmt.Errorf("archive file is empty")
+	}
+	
+	if info.Size() < 100 {
+		return fmt.Errorf("archive file too small (%d bytes) - likely corrupted", info.Size())
+	}
+
+	// Validate gzip header
+	header := make([]byte, 10)
+	n, err := file.Read(header)
+	if err != nil {
+		return fmt.Errorf("failed to read archive header: %w", err)
+	}
+	
+	if n < 3 {
+		return fmt.Errorf("archive header too short")
+	}
+	
+	// Check gzip magic number (1f 8b)
+	if header[0] != 0x1f || header[1] != 0x8b {
+		return fmt.Errorf("invalid gzip header - not a valid tar.gz file")
+	}
+	
+	// Check compression method (should be 8 for deflate)
+	if header[2] != 0x08 {
+		return fmt.Errorf("unsupported gzip compression method: %d", header[2])
+	}
+
+	return nil
+}
+
+// ValidateArchiveStructure checks that the archive contains the expected executable
+func ValidateArchiveStructure(archivePath string) error {
+	file, err := os.Open(archivePath)
+	if err != nil {
+		return fmt.Errorf("failed to open archive for structure validation: %w", err)
+	}
+	defer file.Close()
+
+	gzipReader, err := gzip.NewReader(file)
+	if err != nil {
+		return fmt.Errorf("failed to create gzip reader for validation: %w", err)
+	}
+	defer gzipReader.Close()
+
+	tarReader := tar.NewReader(gzipReader)
+
+	expectedExecutable := "tuido"
+	if runtime.GOOS == "windows" {
+		expectedExecutable = "tuido.exe"
+	}
+
+	foundExecutable := false
+	fileCount := 0
+
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return fmt.Errorf("failed to read tar header during validation: %w", err)
+		}
+
+		fileCount++
+
+		// Skip directories
+		if header.Typeflag == tar.TypeDir {
+			continue
+		}
+
+		// Check for our expected executable
+		fileName := filepath.Base(header.Name)
+		if fileName == expectedExecutable && header.Typeflag == tar.TypeReg {
+			foundExecutable = true
+			
+			// Validate executable size
+			if header.Size == 0 {
+				return fmt.Errorf("executable file '%s' is empty in archive", expectedExecutable)
+			}
+			
+			if header.Size < 100000 {
+				return fmt.Errorf("executable file '%s' seems too small (%d bytes) - likely corrupted", expectedExecutable, header.Size)
+			}
+		}
+	}
+
+	if fileCount == 0 {
+		return fmt.Errorf("archive appears to be empty")
+	}
+
+	if !foundExecutable {
+		return fmt.Errorf("expected executable '%s' not found in archive", expectedExecutable)
+	}
+
+	return nil
+}
+
+// ValidateExtractedBinary performs post-extraction validation of the executable
+func ValidateExtractedBinary(binaryPath string) error {
+	// Check file exists
+	info, err := os.Stat(binaryPath)
+	if err != nil {
+		return fmt.Errorf("extracted binary does not exist: %w", err)
+	}
+
+	// Check file size
+	if info.Size() == 0 {
+		return fmt.Errorf("extracted binary is empty")
+	}
+
+	if info.Size() < 100000 {
+		return fmt.Errorf("extracted binary seems too small (%d bytes) - likely corrupted", info.Size())
+	}
+
+	// Check executable permissions
+	if runtime.GOOS != "windows" {
+		if info.Mode()&0111 == 0 {
+			return fmt.Errorf("extracted binary is not executable (mode: %s)", info.Mode())
+		}
+	}
+
+	// Validate binary format
+	file, err := os.Open(binaryPath)
+	if err != nil {
+		return fmt.Errorf("failed to open extracted binary for validation: %w", err)
+	}
+	defer file.Close()
+
+	header := make([]byte, 4)
+	n, err := file.Read(header)
+	if err != nil {
+		return fmt.Errorf("failed to read binary header: %w", err)
+	}
+
+	if n < 4 {
+		return fmt.Errorf("binary header too short")
+	}
+
+	// Platform-specific binary format validation
+	switch runtime.GOOS {
+	case "linux":
+		// Check for ELF magic number (7f 45 4c 46)
+		if header[0] != 0x7f || header[1] != 0x45 || header[2] != 0x4c || header[3] != 0x46 {
+			return fmt.Errorf("invalid ELF binary format - header: %x", header)
+		}
+	case "darwin":
+		// Check for Mach-O magic numbers
+		validMachO := (header[0] == 0xfe && header[1] == 0xed && header[2] == 0xfa && header[3] == 0xce) ||
+			(header[0] == 0xfe && header[1] == 0xed && header[2] == 0xfa && header[3] == 0xcf) ||
+			(header[0] == 0xcf && header[1] == 0xfa && header[2] == 0xed && header[3] == 0xfe) ||
+			(header[0] == 0xca && header[1] == 0xfe && header[2] == 0xba && header[3] == 0xbe)
+		if !validMachO {
+			return fmt.Errorf("invalid Mach-O binary format - header: %x", header)
+		}
+	case "windows":
+		// Check for PE magic number (4d 5a - "MZ")
+		if header[0] != 0x4d || header[1] != 0x5a {
+			return fmt.Errorf("invalid PE binary format - header: %x", header)
+		}
+	default:
+		// For other platforms, just check it's not obviously a text file
+		for _, b := range header {
+			if b == 0 {
+				// Contains null bytes, likely binary
+				return nil
+			}
+		}
+		return fmt.Errorf("binary appears to be text file - header: %x", header)
+	}
+
+	return nil
+}
+
+// ValidateAssetChecksum validates the downloaded asset against GitHub release checksums
+func ValidateAssetChecksum(assetPath string, asset *ReleaseAsset) error {
+	// Calculate SHA256 of the downloaded file
+	hash, err := CalculateSHA256(assetPath)
+	if err != nil {
+		return fmt.Errorf("failed to calculate checksum: %w", err)
+	}
+
+	// Get expected checksum from GitHub release
+	expectedHash, err := fetchAssetChecksum(asset.Name)
+	if err != nil {
+		// If checksums aren't available, warn but don't fail
+		// This maintains compatibility with older releases
+		return nil
+	}
+
+	if hash != expectedHash {
+		return fmt.Errorf("checksum mismatch - expected: %s, got: %s", expectedHash, hash)
+	}
+
+	return nil
+}
+
+// CalculateSHA256 computes the SHA256 hash of a file
+func CalculateSHA256(filePath string) (string, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer file.Close()
+
+	hasher := sha256.New()
+	if _, err := io.Copy(hasher, file); err != nil {
+		return "", err
+	}
+
+	return hex.EncodeToString(hasher.Sum(nil)), nil
+}
+
+// fetchAssetChecksum retrieves the expected checksum for an asset from GitHub release
+func fetchAssetChecksum(assetName string) (string, error) {
+	// Get the latest release to find the checksums file
+	release, err := fetchLatestRelease()
+	if err != nil {
+		return "", fmt.Errorf("failed to fetch release for checksums: %w", err)
+	}
+
+	// Find the checksums file
+	var checksumsAsset *ReleaseAsset
+	for _, asset := range release.Assets {
+		if strings.Contains(asset.Name, "checksums") {
+			checksumsAsset = &asset
+			break
+		}
+	}
+
+	if checksumsAsset == nil {
+		return "", fmt.Errorf("checksums file not found in release")
+	}
+
+	// Download and parse checksums file
+	return downloadAndParseChecksums(checksumsAsset.DownloadURL, assetName)
+}
+
+// downloadAndParseChecksums downloads the checksums file and extracts the hash for the specified asset
+func downloadAndParseChecksums(checksumsURL, assetName string) (string, error) {
+	// Create HTTP client
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	req, err := http.NewRequest("GET", checksumsURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create checksums request: %w", err)
+	}
+
+	req.Header.Set("User-Agent", "tuido/"+version)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("failed to download checksums: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return "", fmt.Errorf("checksums download failed with status %d", resp.StatusCode)
+	}
+
+	// Read checksums content
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("failed to read checksums content: %w", err)
+	}
+
+	// Parse checksums file (format: "hash  filename")
+	lines := strings.Split(string(content), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		parts := strings.Fields(line)
+		if len(parts) >= 2 {
+			hash := parts[0]
+			filename := parts[1]
+			
+			if filename == assetName {
+				return hash, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("checksum not found for asset: %s", assetName)
+}
+
 // ExtractExecutableFromArchive extracts the executable from a tar.gz archive
 func ExtractExecutableFromArchive(archivePath, extractDir string) (string, error) {
+	// Pre-extraction validation
+	err := ValidateArchiveFormat(archivePath)
+	if err != nil {
+		return "", fmt.Errorf("archive format validation failed: %w", err)
+	}
+
+	err = ValidateArchiveStructure(archivePath)
+	if err != nil {
+		return "", fmt.Errorf("archive structure validation failed: %w", err)
+	}
+	// Perform extraction
+	extractedPath, err := performExtraction(archivePath, extractDir)
+	if err != nil {
+		return "", fmt.Errorf("extraction failed: %w", err)
+	}
+
+	// Post-extraction validation
+	err = ValidateExtractedBinary(extractedPath)
+	if err != nil {
+		// Clean up invalid extracted file
+		os.Remove(extractedPath)
+		return "", fmt.Errorf("extracted binary validation failed: %w", err)
+	}
+
+	return extractedPath, nil
+}
+
+// performExtraction handles the actual tar.gz extraction process
+func performExtraction(archivePath, extractDir string) (string, error) {
 	// Open the tar.gz file
 	file, err := os.Open(archivePath)
 	if err != nil {

@@ -153,7 +153,25 @@ func TestExtractExecutableFromArchive(t *testing.T) {
 	
 	// Create a proper tar.gz archive with executable
 	archivePath := filepath.Join(tempDir, "mock_archive.tar.gz")
-	mockContent := "mock executable content"
+	// Create content large enough to pass validation (needs >100k bytes)
+	// Start with proper binary header for current platform
+	var mockContent string
+	switch runtime.GOOS {
+	case "linux":
+		// ELF header
+		mockContent = string([]byte{0x7f, 0x45, 0x4c, 0x46})
+	case "darwin":
+		// Mach-O header
+		mockContent = string([]byte{0xfe, 0xed, 0xfa, 0xce})
+	case "windows":
+		// PE header (MZ)
+		mockContent = string([]byte{0x4d, 0x5a, 0x00, 0x00})
+	default:
+		// Generic binary (contains null bytes)
+		mockContent = string([]byte{0x00, 0x01, 0x02, 0x03})
+	}
+	// Pad to minimum size
+	mockContent += strings.Repeat("binary content padding", 5000)
 	
 	// Create the tar.gz archive
 	err := createMockTarGz(archivePath, mockContent)
@@ -231,6 +249,197 @@ func createMockTarGz(archivePath, content string) error {
 	// Write file content
 	_, err = tarWriter.Write([]byte(content))
 	return err
+}
+
+func TestValidateArchiveFormat(t *testing.T) {
+	tempDir := t.TempDir()
+	
+	// Test with valid tar.gz file
+	validArchive := filepath.Join(tempDir, "valid.tar.gz")
+	err := createMockTarGz(validArchive, "test content")
+	if err != nil {
+		t.Fatalf("Failed to create valid archive: %v", err)
+	}
+	
+	err = utils.ValidateArchiveFormat(validArchive)
+	if err != nil {
+		t.Errorf("ValidateArchiveFormat failed for valid archive: %v", err)
+	}
+	
+	// Test with empty file
+	emptyFile := filepath.Join(tempDir, "empty.tar.gz")
+	err = os.WriteFile(emptyFile, []byte{}, 0644)
+	if err != nil {
+		t.Fatalf("Failed to create empty file: %v", err)
+	}
+	
+	err = utils.ValidateArchiveFormat(emptyFile)
+	if err == nil {
+		t.Error("Expected error for empty file but validation passed")
+	}
+	
+	// Test with invalid header
+	invalidFile := filepath.Join(tempDir, "invalid.tar.gz")
+	err = os.WriteFile(invalidFile, []byte("not a gzip file"), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create invalid file: %v", err)
+	}
+	
+	err = utils.ValidateArchiveFormat(invalidFile)
+	if err == nil {
+		t.Error("Expected error for invalid gzip header but validation passed")
+	}
+	
+	// Test with non-existent file
+	err = utils.ValidateArchiveFormat("/non/existent/file.tar.gz")
+	if err == nil {
+		t.Error("Expected error for non-existent file but validation passed")
+	}
+}
+
+func TestValidateArchiveStructure(t *testing.T) {
+	tempDir := t.TempDir()
+	
+	// Test with valid archive containing executable
+	validArchive := filepath.Join(tempDir, "valid.tar.gz")
+	// Create content large enough to pass validation (needs >100k bytes)
+	mockContent := strings.Repeat("mock executable content with sufficient size to pass validation checks", 2000)
+	err := createMockTarGz(validArchive, mockContent)
+	if err != nil {
+		t.Fatalf("Failed to create valid archive: %v", err)
+	}
+	
+	err = utils.ValidateArchiveStructure(validArchive)
+	if err != nil {
+		t.Errorf("ValidateArchiveStructure failed for valid archive: %v", err)
+	}
+	
+	// Test with archive missing executable
+	emptyArchive := filepath.Join(tempDir, "empty.tar.gz")
+	err = createEmptyTarGz(emptyArchive)
+	if err != nil {
+		t.Fatalf("Failed to create empty archive: %v", err)
+	}
+	
+	err = utils.ValidateArchiveStructure(emptyArchive)
+	if err == nil {
+		t.Error("Expected error for archive without executable but validation passed")
+	}
+}
+
+func TestValidateExtractedBinary(t *testing.T) {
+	tempDir := t.TempDir()
+	
+	// Create a mock binary file with proper header for current platform
+	binaryPath := filepath.Join(tempDir, "tuido")
+	if runtime.GOOS == "windows" {
+		binaryPath += ".exe"
+	}
+	
+	var mockBinary []byte
+	switch runtime.GOOS {
+	case "linux":
+		// ELF header
+		mockBinary = []byte{0x7f, 0x45, 0x4c, 0x46}
+	case "darwin":
+		// Mach-O header
+		mockBinary = []byte{0xfe, 0xed, 0xfa, 0xce}
+	case "windows":
+		// PE header (MZ)
+		mockBinary = []byte{0x4d, 0x5a, 0x00, 0x00}
+	default:
+		// Generic binary (contains null bytes)
+		mockBinary = []byte{0x00, 0x01, 0x02, 0x03}
+	}
+	
+	// Pad to minimum size
+	for len(mockBinary) < 100000 {
+		mockBinary = append(mockBinary, 0x00)
+	}
+	
+	err := os.WriteFile(binaryPath, mockBinary, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create mock binary: %v", err)
+	}
+	
+	err = utils.ValidateExtractedBinary(binaryPath)
+	if err != nil {
+		t.Errorf("ValidateExtractedBinary failed for valid binary: %v", err)
+	}
+	
+	// Test with empty file
+	emptyBinary := filepath.Join(tempDir, "empty_binary")
+	err = os.WriteFile(emptyBinary, []byte{}, 0755)
+	if err != nil {
+		t.Fatalf("Failed to create empty binary: %v", err)
+	}
+	
+	err = utils.ValidateExtractedBinary(emptyBinary)
+	if err == nil {
+		t.Error("Expected error for empty binary but validation passed")
+	}
+	
+	// Test with text file
+	textFile := filepath.Join(tempDir, "text_file")
+	err = os.WriteFile(textFile, []byte("this is just text content"), 0755)
+	if err != nil {
+		t.Fatalf("Failed to create text file: %v", err)
+	}
+	
+	err = utils.ValidateExtractedBinary(textFile)
+	if err == nil && runtime.GOOS != "windows" {
+		t.Error("Expected error for text file but validation passed")
+	}
+}
+
+func TestCalculateSHA256(t *testing.T) {
+	tempDir := t.TempDir()
+	
+	// Create test file with known content
+	testContent := "test content for sha256"
+	testFile := filepath.Join(tempDir, "test.txt")
+	err := os.WriteFile(testFile, []byte(testContent), 0644)
+	if err != nil {
+		t.Fatalf("Failed to create test file: %v", err)
+	}
+	
+	hash, err := utils.CalculateSHA256(testFile)
+	if err != nil {
+		t.Errorf("CalculateSHA256 failed: %v", err)
+	}
+	
+	// Verify hash is not empty and has correct format
+	if hash == "" {
+		t.Error("CalculateSHA256 returned empty hash")
+	}
+	
+	if len(hash) != 64 {
+		t.Errorf("Expected 64-character hash, got %d characters", len(hash))
+	}
+	
+	// Test with non-existent file
+	_, err = utils.CalculateSHA256("/non/existent/file")
+	if err == nil {
+		t.Error("Expected error for non-existent file but CalculateSHA256 succeeded")
+	}
+}
+
+// createEmptyTarGz creates an empty tar.gz archive
+func createEmptyTarGz(archivePath string) error {
+	file, err := os.Create(archivePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	gzipWriter := gzip.NewWriter(file)
+	defer gzipWriter.Close()
+
+	tarWriter := tar.NewWriter(gzipWriter)
+	defer tarWriter.Close()
+
+	// Create empty archive - no files added
+	return nil
 }
 
 func TestCleanupBackups(t *testing.T) {

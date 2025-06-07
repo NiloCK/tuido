@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const version = "v0.0.16"
+const version = "v0.0.17"
 const ReleaseURL = "https://github.com/NiloCK/tuido/releases/latest"
 const GitHubAPIURL = "https://api.github.com/repos/NiloCK/tuido/releases/latest"
 

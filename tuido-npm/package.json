@@ -1,6 +1,6 @@
 {
   "name": "tuido",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Terminal interface for managing tasks and todos in [x]it! format",
   "bin": {
     "tuido": "./bin/tuido-cli.js"
@@ -26,7 +26,6 @@
   },
   "homepage": "https://github.com/NiloCK/tuido#readme",
   "dependencies": {
-    "binary-install": "^1.1.0",
     "tar": "^6.0.0"
   },
   "engines": {

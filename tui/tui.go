@@ -451,24 +451,24 @@ func (t tui) Init() tea.Cmd { return tick() }
 func getItems(file string) []*tuido.Item {
 	items := []*tuido.Item{}
 
-	f, err := os.Open(file)
-	defer f.Close()
+	if f, err := os.Open(file); err != nil {
+		f.Close()
+		return items
+	} else {
+		defer f.Close()
 
-	if err != nil {
-		panic(err)
-	}
-
-	scanner := bufio.NewScanner(f)
-	line := 1
-	for scanner.Scan() {
-		if tuido.IsTuido(scanner.Text()) {
-			item := tuido.New(file, line, scanner.Text())
-			items = append(items, &item)
+		scanner := bufio.NewScanner(f)
+		line := 1
+		for scanner.Scan() {
+			if tuido.IsTuido(scanner.Text()) {
+				item := tuido.New(file, line, scanner.Text())
+				items = append(items, &item)
+			}
+			line++
 		}
-		line++
-	}
 
-	return items
+		return items
+	}
 }
 
 func getFiles(wd string, extensions []string) []string {

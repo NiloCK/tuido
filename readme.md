@@ -1,5 +1,9 @@
 An opinionated terminal interface for efficient browsing and management of [[x]it!](https://github.com/jotaen/xit) formatted todo items. Inspired, loosely, by _Getting Things Done_ (David Allen) and informed by various entries of the self-help skills & habits genre (Charles Duhigg, James Clear, Anders Ericsson, etc).
 
+## ⚠️ Status ⚠️
+
+Development on this project is essentially paused. The current app suits my own needs well and I am not currently time rich. Contained, legible PRs are probably OK, but general recommendation for further customization is to fork.
+
 ## Features
 
 - [x] searches the working directory recursively for [x]it! compatible items in `.xit`, `.md`, and `.txt` files

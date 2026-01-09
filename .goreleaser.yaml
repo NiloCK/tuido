@@ -29,3 +29,14 @@ builds:
         goarm: arm64
       - goos: plan0
         goarm: arm64
+
+archives:
+  - format: tar.gz
+    # this name template matches the internal download logic of tuido-npm/install.js
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+

@@ -46,7 +46,7 @@ func Run() {
 		os.Exit(1)
 	}
 	if wtStat.IsDir() {
-		writeDirFiles := getFiles(runConfig.writeto, runConfig.extensions)
+		writeDirFiles := GetFiles(runConfig.writeto, runConfig.extensions)
 		for _, f := range writeDirFiles {
 			files[f] = struct{}{}
 		}
@@ -54,7 +54,7 @@ func Run() {
 
 	// [ ] replace with subdir check #active=2022-05-26 #zzz=2
 	if wrkdirStr != runConfig.writeto {
-		wdFiles := getFiles(wrkdirStr, runConfig.extensions)
+		wdFiles := GetFiles(wrkdirStr, runConfig.extensions)
 		for _, f := range wdFiles {
 			files[f] = struct{}{}
 		}
@@ -62,10 +62,10 @@ func Run() {
 
 	items := []*tuido.Item{}
 	for f := range files {
-		items = append(items, getItems(f)...)
+		items = append(items, GetItems(f)...)
 	}
 
-	sortItems(items)
+	SortItems(items)
 
 	tui := newTUI(items, runConfig)
 	tui.houseKeeping()
@@ -313,7 +313,7 @@ func (t *tui) populateRenderSelection() {
 
 	// Only sort if no filter is active - preserve fuzzy search ranking
 	if len(t.filter.Value()) == 0 {
-		sortItems(t.renderSelection)
+		SortItems(t.renderSelection)
 	}
 
 	// ensure the previous selection value is still in range
@@ -448,7 +448,7 @@ func itemHasTag(itemTags []tuido.Tag, filter tuido.Tag) bool {
 
 func (t tui) Init() tea.Cmd { return tick() }
 
-func getItems(file string) []*tuido.Item {
+func GetItems(file string) []*tuido.Item {
 	items := []*tuido.Item{}
 
 	if f, err := os.Open(file); err != nil {
@@ -471,7 +471,7 @@ func getItems(file string) []*tuido.Item {
 	}
 }
 
-func getFiles(wd string, extensions []string) []string {
+func GetFiles(wd string, extensions []string) []string {
 
 	files := []string{}
 
@@ -501,7 +501,7 @@ func getFiles(wd string, extensions []string) []string {
 	return files
 }
 
-func sortItems(items []*tuido.Item) {
+func SortItems(items []*tuido.Item) {
 	sort.SliceStable(items, func(i, j int) bool {
 		if items[i].Importance() > items[j].Importance() {
 			return true

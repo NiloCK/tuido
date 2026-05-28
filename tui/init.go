@@ -8,45 +8,61 @@ import (
 	"time"
 )
 
+// ConfigFound is true if a local or global config was loaded at startup.
+// When false, the caller should prompt the user to run `tuido init`.
+var ConfigFound bool
+
 func init() {
-	rand.Seed(time.Now().Unix()) // a fresh set of tag colors on each run. Spice of life.
+	rand.Seed(time.Now().Unix())
 
 	home, err := os.UserHomeDir()
 	if err != nil {
 		fmt.Printf("error getting user home dir: %s", err)
 	}
-	tuidoDir := filepath.Join(home, ".tuido")
-	runConfig.writeto = tuidoDir
+	runConfig.writeto = filepath.Join(home, ".tuido")
 
-	loadFromDefaultConfigLocation()
+	ConfigFound = loadConfig()
 
-	// make sure the write target exists
 	_, err = os.Open(runConfig.writeto)
 	if err != nil {
 		err = os.Mkdir(runConfig.writeto, 0777)
 		if err != nil {
-			fmt.Printf("error creating appDirectory %s': %v\n",
-				runConfig.writeto, err)
+			fmt.Printf("error creating appDirectory %s': %v\n", runConfig.writeto, err)
 		}
 	}
 }
 
-func loadFromDefaultConfigLocation() {
+// loadConfig loads configuration with priority: cwd .tuido > global config.
+// Returns true if any config was found.
+func loadConfig() bool {
+	cwd, err := os.Getwd()
+	if err == nil {
+		if cfg := parseConfigIfExists(filepath.Join(cwd, ".tuido")); cfg != nil && cfg.hasSettings() {
+			applyConfig(cfg)
+			return true
+		}
+	}
+	return loadFromDefaultConfigLocation()
+}
+
+func loadFromDefaultConfigLocation() bool {
 	cfgDir, err := os.UserConfigDir()
 	if err != nil {
-		fmt.Println("error seeking configdir")
-		return
+		return false
 	}
+	cfg := parseConfigIfExists(filepath.Join(cfgDir, "tuido.conf"))
+	if cfg == nil || !cfg.hasSettings() {
+		return false
+	}
+	applyConfig(cfg)
+	return true
+}
 
-	cfgPath := filepath.Join(cfgDir, "tuido.conf")
-	cfg := parseConfigIfExists(cfgPath)
-
-	if cfg != nil {
-		if len(cfg.extensions) != 0 {
-			runConfig.extensions = cfg.extensions
-		}
-		if cfg.writeto != "" {
-			runConfig.writeto = cfg.writeto
-		}
+func applyConfig(cfg *config) {
+	if len(cfg.extensions) != 0 {
+		runConfig.extensions = cfg.extensions
+	}
+	if cfg.writeto != "" {
+		runConfig.writeto = cfg.writeto
 	}
 }

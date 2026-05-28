@@ -35,7 +35,6 @@ func Run() {
 		panic(err)
 	}
 
-	adoptConfigSettings(filepath.Join(wrkdirStr, ".tuido"))
 	// [ ] read cli flags for added extensions / extension specificity
 
 	files := make(map[string]struct{})

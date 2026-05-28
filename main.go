@@ -45,10 +45,19 @@ func main() {
 			showVersionInfo()
 			return
 
+		case "init":
+			tui.RunInitWizard()
+			return
+
 		case "help", "-help", "--help", "-h":
 			printHelp()
 			return
 		}
+	}
+
+	if !tui.ConfigFound {
+		fmt.Println("No tuido configuration found. Run `tuido init` to set up.")
+		os.Exit(1)
 	}
 
 	var showVersion = flag.Bool("version", false, "show version and platform information")
@@ -117,6 +126,7 @@ Commands:
     --max N                 Limit output to N items
   create <text>           Create a new todo item
   add <text>              Alias for create
+  init                    Create a local or global config (interactive)
   version                 Show version and platform information
   help                    Show this help
 

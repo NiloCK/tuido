@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -42,17 +43,6 @@ var runConfig config = config{
 	extensions:        []string{"xit", "md", "txt"},
 	writeto:           "~/.tuido",
 	frictionThreshold: 5,
-}
-
-func adoptConfigSettings(location string) {
-	config := parseConfigIfExists(location)
-
-	if config != nil {
-		runConfig.extensions = append(runConfig.extensions, config.extensions...)
-		if config.writeto != "" {
-			runConfig.writeto = config.writeto
-		}
-	}
 }
 
 func parseConfigIfExists(configPath string) *config {
@@ -104,6 +94,83 @@ func parseConfig(file *os.File) config {
 	}
 
 	return cfg
+}
+
+func (cfg config) hasSettings() bool {
+	return len(cfg.extensions) > 0 || cfg.writeto != ""
+}
+
+// RunInitWizard interactively creates a local or global tuido config file.
+func RunInitWizard() {
+	reader := bufio.NewReader(os.Stdin)
+
+	fmt.Print("Configure locally (./.tuido) or globally (~/.config/tuido.conf)? [l/g]: ")
+	choice, _ := reader.ReadString('\n')
+	isLocal := strings.ToLower(strings.TrimSpace(choice)) != "g"
+
+	var configPath, defaultWriteto string
+	if isLocal {
+		cwd, _ := os.Getwd()
+		configPath = filepath.Join(cwd, ".tuido")
+		defaultWriteto = filepath.Join(cwd, ".tuido")
+	} else {
+		cfgDir, _ := os.UserConfigDir()
+		configPath = filepath.Join(cfgDir, "tuido.conf")
+		home, _ := os.UserHomeDir()
+		defaultWriteto = filepath.Join(home, ".tuido")
+	}
+
+	fmt.Printf("Where should new items be written? [%s]: ", defaultWriteto)
+	writeto, _ := reader.ReadString('\n')
+	writeto = strings.TrimSpace(writeto)
+	if writeto == "" {
+		writeto = defaultWriteto
+	}
+
+	defaultExt := strings.Join(runConfig.extensions, ",")
+	fmt.Printf("File extensions to scan (comma-separated)? [%s]: ", defaultExt)
+	extInput, _ := reader.ReadString('\n')
+	extInput = strings.TrimSpace(extInput)
+	if extInput == "" {
+		extInput = defaultExt
+	}
+
+	if err := writeConfigFile(configPath, extInput, writeto); err != nil {
+		fmt.Printf("Error writing config to %s: %v\n", configPath, err)
+		os.Exit(1)
+	}
+	fmt.Printf("Config written to %s\n", configPath)
+}
+
+// writeConfigFile writes config lines to path, preserving any non-config
+// content (todo items) that already exists below the config header.
+func writeConfigFile(path, extensions, writeto string) error {
+	var itemLines []string
+	if f, err := os.Open(path); err == nil {
+		defer f.Close()
+		scanner := bufio.NewScanner(f)
+		pastConfig := false
+		for scanner.Scan() {
+			line := scanner.Text()
+			if !pastConfig {
+				parts := strings.SplitN(line, "=", 2)
+				if len(parts) == 2 {
+					continue
+				}
+				pastConfig = true
+			}
+			itemLines = append(itemLines, line)
+		}
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("extensions=%s\n", extensions))
+	sb.WriteString(fmt.Sprintf("writeto=%s\n", writeto))
+	for _, line := range itemLines {
+		sb.WriteString(line + "\n")
+	}
+
+	return os.WriteFile(path, []byte(sb.String()), 0644)
 }
 
 func GetConfigExtensions() []string {

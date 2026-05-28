@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -81,7 +82,7 @@ func runList(path string, max int, inclSnoozed bool, inclDone bool) {
 
 	tui.SortItems(all)
 
-	filtered := all[:0]
+	var filtered []*tuido.Item
 	for _, item := range all {
 		s := item.Satus()
 		if !inclDone && (s == tuido.Checked || s == tuido.Obsolete) {
@@ -97,10 +98,60 @@ func runList(path string, max int, inclSnoozed bool, inclDone bool) {
 	if max > 0 && max < count {
 		count = max
 	}
+	filtered = filtered[:count]
 
-	for i := 0; i < count; i++ {
-		fmt.Printf("%s\n", filtered[i].String())
+	writeTo := expandTilde(tui.GetConfigWriteTo())
+
+	type entry struct {
+		prefix string
+		text   string
 	}
+	entries := make([]entry, count)
+	prevFile := ""
+	for i, item := range filtered {
+		loc := item.Location()
+		lastColon := strings.LastIndex(loc, ":")
+		filePath, lineStr := loc[:lastColon], loc[lastColon+1:]
+		baseName := filepath.Base(filePath)
+
+		absFile, err := filepath.Abs(filePath)
+		if err != nil {
+			absFile = filePath
+		}
+		isWriteTo := absFile == writeTo ||
+			strings.HasPrefix(absFile, writeTo+string(filepath.Separator))
+
+		switch {
+		case isWriteTo:
+			entries[i].prefix = ""
+		case baseName == prevFile:
+			entries[i].prefix = ":" + lineStr
+		default:
+			entries[i].prefix = "(" + baseName + ":" + lineStr + ")"
+			prevFile = baseName
+		}
+		entries[i].text = item.String()
+	}
+
+	maxWidth := 0
+	for _, e := range entries {
+		if len(e.prefix) > maxWidth {
+			maxWidth = len(e.prefix)
+		}
+	}
+
+	for _, e := range entries {
+		fmt.Printf("%*s %s\n", maxWidth, e.prefix, e.text)
+	}
+}
+
+func expandTilde(path string) string {
+	if strings.HasPrefix(path, "~/") {
+		if home, err := os.UserHomeDir(); err == nil {
+			return filepath.Join(home, path[2:])
+		}
+	}
+	return path
 }
 
 func runCreate(text string) {

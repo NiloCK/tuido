@@ -25,6 +25,33 @@ From some directory containing `[x]it!` files / items, or from anywhere to recov
 tuido
 ```
 
+### CLI commands
+
+`tuido` can also be used non-interactively:
+
+```
+tuido list [--max N] [-z] [-a] [path]
+```
+
+Lists open and in-progress items from `path` (default: current directory). Snoozed and completed/cancelled items are excluded by default.
+
+- `-z`, `--zzz` — include snoozed items
+- `-a`, `--all` — include snoozed, completed, and cancelled items
+- `--max N` — limit output to N items
+
+```
+tuido create <text>
+tuido add <text>
+```
+
+Creates a new open item, written to the configured `writeto` location.
+
+```
+tuido init
+```
+
+Interactive setup wizard. Creates a local (`./.tuido`) or global (`~/.config/tuido.conf`) config file. Run this the first time you use `tuido` in a new context, or to reconfigure an existing one.
+
 ### In app controls
 
 - **?**: help

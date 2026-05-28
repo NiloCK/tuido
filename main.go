@@ -18,6 +18,10 @@ func main() {
 		case "list":
 			listCmd := flag.NewFlagSet("list", flag.ExitOnError)
 			maxItems := listCmd.Int("max", 0, "maximum number of items to display")
+			inclSnoozed := listCmd.Bool("z", false, "include snoozed items")
+			listCmd.BoolVar(inclSnoozed, "zzz", false, "include snoozed items")
+			inclAll := listCmd.Bool("a", false, "include snoozed and completed/cancelled items")
+			listCmd.BoolVar(inclAll, "all", false, "include snoozed and completed/cancelled items")
 			listCmd.Parse(os.Args[2:])
 
 			path := "."
@@ -25,13 +29,13 @@ func main() {
 				path = listCmd.Arg(0)
 			}
 
-			runList(path, *maxItems)
+			runList(path, *maxItems, *inclSnoozed || *inclAll, *inclAll)
 			return
 
 		case "create", "add":
 			text := strings.Join(os.Args[2:], " ")
 			if text == "" {
-				fmt.Println("Usage: tuido create [text]")
+				fmt.Fprintln(os.Stderr, "Usage: tuido create <text>")
 				os.Exit(1)
 			}
 			runCreate(text)
@@ -40,10 +44,15 @@ func main() {
 		case "version", "-version", "--version":
 			showVersionInfo()
 			return
+
+		case "help", "-help", "--help", "-h":
+			printHelp()
+			return
 		}
 	}
 
 	var showVersion = flag.Bool("version", false, "show version and platform information")
+	flag.Usage = printHelp
 	flag.Parse()
 
 	if *showVersion {
@@ -54,23 +63,34 @@ func main() {
 	tui.Run()
 }
 
-func runList(path string, max int) {
+func runList(path string, max int, inclSnoozed bool, inclDone bool) {
 	files := tui.GetFiles(path, tui.GetConfigExtensions())
-	items := []*tuido.Item{}
+	all := []*tuido.Item{}
 	for _, f := range files {
-		items = append(items, tui.GetItems(f)...)
+		all = append(all, tui.GetItems(f)...)
 	}
 
-	tui.SortItems(items)
+	tui.SortItems(all)
 
-	count := len(items)
+	filtered := all[:0]
+	for _, item := range all {
+		s := item.Satus()
+		if !inclDone && (s == tuido.Checked || s == tuido.Obsolete) {
+			continue
+		}
+		if !inclSnoozed && !item.Active() {
+			continue
+		}
+		filtered = append(filtered, item)
+	}
+
+	count := len(filtered)
 	if max > 0 && max < count {
 		count = max
 	}
 
 	for i := 0; i < count; i++ {
-		item := items[i]
-		fmt.Printf("%s\n", item.String())
+		fmt.Printf("%s\n", filtered[i].String())
 	}
 }
 
@@ -83,6 +103,26 @@ func runCreate(text string) {
 		os.Exit(1)
 	}
 	fmt.Printf("Created: %s\n", item.String())
+}
+
+func printHelp() {
+	fmt.Print(`Usage: tuido [command] [options]
+
+Without a command, opens the interactive TUI.
+
+Commands:
+  list [options] [path]   List open/in-progress items (default path: .)
+    -z, --zzz               Include snoozed items
+    -a, --all               Include snoozed and completed/cancelled items
+    --max N                 Limit output to N items
+  create <text>           Create a new todo item
+  add <text>              Alias for create
+  version                 Show version and platform information
+  help                    Show this help
+
+Flags:
+  -version                Show version and platform information
+`)
 }
 
 func showVersionInfo() {

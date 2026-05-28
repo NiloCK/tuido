@@ -105,3 +105,11 @@ func parseConfig(file *os.File) config {
 
 	return cfg
 }
+
+func GetConfigExtensions() []string {
+	return runConfig.extensions
+}
+
+func GetConfigWriteTo() string {
+	return runConfig.writeto
+}

@@ -1,7 +1,11 @@
 # .goreleaser.yaml
+version: 2
+
 builds:
   - env:
       - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/nilock/tuido/utils.version=v{{ .Version }}
     goos:
       - darwin
       - linux

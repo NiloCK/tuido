@@ -10,16 +10,34 @@ import (
 	"net/url"
 	"os"
 	"runtime"
+	"runtime/debug"
 	"strings"
 	"time"
 )
 
-const version = "v0.0.18"
+// version is injected at build time by GoReleaser via
+//   -ldflags "-X github.com/nilock/tuido/utils.version=vX.Y.Z".
+// For unversioned local builds (go build / go run) it stays "dev".
+var version = "dev"
+
 const ReleaseURL = "https://github.com/NiloCK/tuido/releases/latest"
 const GitHubAPIURL = "https://api.github.com/repos/NiloCK/tuido/releases/latest"
 
 // Version returns the currently running version of the application.
+//
+// Precedence:
+//  1. the ldflags-injected value (release binaries),
+//  2. the module version for `go install module@vX.Y.Z` builds,
+//  3. "dev" for unversioned local builds.
 func Version() string {
+	if version != "dev" {
+		return version
+	}
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if v := info.Main.Version; v != "" && v != "(devel)" {
+			return v
+		}
+	}
 	return version
 }
 

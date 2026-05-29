@@ -111,6 +111,10 @@ func newTUI(items []*tuido.Item, cfg config) tui {
 
 func (t *tui) houseKeeping() {
 	local := utils.Version()
+	if local == "dev" {
+		// Unversioned local build; no meaningful release to compare against.
+		return
+	}
 	curent := utils.LatestVersion()
 
 	if local != curent {

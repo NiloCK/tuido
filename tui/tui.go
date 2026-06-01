@@ -475,33 +475,73 @@ func GetItems(file string) []*tuido.Item {
 }
 
 func GetFiles(wd string, extensions []string) []string {
+	return getFiles(wd, extensions, runConfig.exclude)
+}
+
+func getFiles(wd string, extensions []string, exclude []string) []string {
 
 	files := []string{}
 
 	walkrepo.WalkRepo(wd, func(path string, d fs.FileInfo, err error) error {
-		// apply .tuido configured extensions if they exist, but do not
-		// read a configured writeto. writeto is decided by the root
-		// working directory or user config
 		if d.IsDir() {
+			if isExcluded(path, wd, exclude) {
+				return filepath.SkipDir
+			}
+			// apply .tuido configured extensions/excludes if they exist, but do not
+			// read a configured writeto. writeto is decided by the root
+			// working directory or user config
 			cfg := parseConfigIfExists(filepath.Join(path, ".tuido"))
 			if cfg != nil {
-				extensions = cfg.extensions
+				if len(cfg.extensions) > 0 {
+					extensions = cfg.extensions
+				}
+				if len(cfg.exclude) > 0 {
+					exclude = append(exclude, cfg.exclude...)
+				}
 			}
+			return nil
+		}
+
+		if isExcluded(path, wd, exclude) {
+			return nil
 		}
 
 		for _, suffix := range extensions {
-
-			if strings.HasSuffix(
-				strings.ToLower(path),
-				suffix,
-			) {
+			if strings.HasSuffix(strings.ToLower(path), suffix) {
 				files = append(files, path)
 			}
-
 		}
 		return nil
 	})
 	return files
+}
+
+// isExcluded reports whether path matches any exclude glob against its components
+// relative to root. Each pattern is matched against individual path components
+// (e.g. "node_modules") or as a full relative path glob (e.g. "src/*.gen.go").
+func isExcluded(path, root string, exclude []string) bool {
+	rel, err := filepath.Rel(root, path)
+	if err != nil {
+		return false
+	}
+	parts := strings.Split(rel, string(filepath.Separator))
+	for _, pattern := range exclude {
+		pattern = strings.TrimSpace(pattern)
+		if pattern == "" {
+			continue
+		}
+		// match against each individual component
+		for _, part := range parts {
+			if matched, _ := filepath.Match(pattern, part); matched {
+				return true
+			}
+		}
+		// match against full relative path
+		if matched, _ := filepath.Match(pattern, rel); matched {
+			return true
+		}
+	}
+	return false
 }
 
 func SortItems(items []*tuido.Item) {

@@ -25,6 +25,10 @@ type config struct {
 	// frictionThreshold is the number of items that can be displayed or added to
 	// before a nag deterrent is displayed.
 	frictionThreshold int
+
+	// exclude is a list of directory or file name globs to skip during traversal.
+	// Matched against each path component (e.g. "node_modules", "vendor", "*.gen.go").
+	exclude []string
 }
 
 func (cfg config) String() string {
@@ -85,6 +89,9 @@ func parseConfig(file *os.File) config {
 				if err == nil {
 					cfg.frictionThreshold = n
 				}
+			}
+			if split[0] == "exclude" {
+				cfg.exclude = strings.Split(split[1], ",")
 			}
 
 		} else {

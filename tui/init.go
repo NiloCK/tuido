@@ -65,4 +65,10 @@ func applyConfig(cfg *config) {
 	if cfg.writeto != "" {
 		runConfig.writeto = cfg.writeto
 	}
+	if len(cfg.exclude) != 0 {
+		runConfig.exclude = cfg.exclude
+	}
+	if cfg.frictionThreshold != 0 {
+		runConfig.frictionThreshold = cfg.frictionThreshold
+	}
 }

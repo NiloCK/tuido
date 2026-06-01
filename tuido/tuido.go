@@ -83,6 +83,12 @@ func (i *Item) Location() string {
 	return fmt.Sprintf("%s:%d", i.file, i.line)
 }
 
+// File returns the path of the source file the item was read from.
+func (i Item) File() string { return i.file }
+
+// Line returns the 1-indexed line number of the item in its source file.
+func (i Item) Line() int { return i.line }
+
 // Status returns the status of the item. One of:
 //   - open (ie, noted but not begun)
 //   - ongoing (ie, in progress)
@@ -384,6 +390,23 @@ func (i Item) Tags() []Tag {
 	return Tags(i.Text())
 }
 
+// SystemTags returns the ## system tags carried by the item.
+func (i Item) SystemTags() []SystemTag {
+	return SystemTags(i.Text())
+}
+
+// IsControl reports whether the item is a file control item, ie carries the
+// ##file system tag. A control item stands in for its whole file in the
+// aggregate view: its siblings are collapsed behind it.
+func (i Item) IsControl() bool {
+	for _, t := range i.SystemTags() {
+		if t.name == SysFile {
+			return true
+		}
+	}
+	return false
+}
+
 // Active returns the "active" status for snoozed items.
 // Items with `active` tags later than the current date will not
 // be shown in the regular view. Defaults to true.
@@ -563,12 +586,108 @@ func Tags(s string) []Tag {
 	split := strings.Split(s, " ")
 
 	for _, token := range split {
+		// ## denotes a system tag; it is deliberately excluded from the
+		// user tag space (no coloring, no fuzzy filtering). See SystemTags.
+		if strings.HasPrefix(token, "##") {
+			continue
+		}
 		if strings.HasPrefix(token, "#") && len(token) > 1 {
 			tags = append(tags, NewTag(token[1:]))
 		}
 	}
 
 	return tags
+}
+
+// SystemTag is a tuido-reserved, double-hash (##) tag. System tags are parsed
+// and acted upon by tuido itself, and are kept separate from the user-facing
+// Tag space: they are not colorized, not fuzzy-filterable, and do not appear
+// in Item.Tags().
+type SystemTag struct {
+	name  string
+	value string
+}
+
+func (s SystemTag) Name() string  { return s.name }
+func (s SystemTag) Value() string { return s.value }
+func (s SystemTag) String() string {
+	if s.value != "" {
+		return fmt.Sprintf("%s=%s", s.name, s.value)
+	}
+	return s.name
+}
+
+// Reserved system tag names.
+const (
+	// SysFile marks a file's control/summary item. The control item stands
+	// in for the whole file in the aggregate view.
+	SysFile = "file"
+)
+
+// SystemTags parses the ##-prefixed system tags out of s.
+func SystemTags(s string) []SystemTag {
+	tags := []SystemTag{}
+	for _, token := range strings.Split(s, " ") {
+		if strings.HasPrefix(token, "##") && len(token) > 2 {
+			tags = append(tags, newSystemTag(token[2:]))
+		}
+	}
+	return tags
+}
+
+// newSystemTag splits a "name=value" (no ## prefix) into a SystemTag.
+func newSystemTag(s string) SystemTag {
+	split := strings.SplitN(s, "=", 2)
+	if len(split) == 2 {
+		return SystemTag{name: split[0], value: split[1]}
+	}
+	return SystemTag{name: s}
+}
+
+// CollapseFileScoped returns items with file-controlled groups collapsed to
+// their control item. For any file that contains a control item (##file),
+// only the control item is retained and its siblings are dropped. Files with
+// no control item are returned unchanged. Input order is preserved.
+func CollapseFileScoped(items []*Item) []*Item {
+	controlled := map[string]bool{}
+	for _, it := range items {
+		if it.IsControl() {
+			controlled[it.file] = true
+		}
+	}
+	if len(controlled) == 0 {
+		return items
+	}
+
+	out := make([]*Item, 0, len(items))
+	for _, it := range items {
+		if controlled[it.file] && !it.IsControl() {
+			continue // sibling collapsed behind its control item
+		}
+		out = append(out, it)
+	}
+	return out
+}
+
+// ChildStats returns the (remaining, total) counts of a control item's
+// children - the non-control items sharing its file. remaining counts open
+// and ongoing children. Because one file carries at most one control item,
+// children are identified as same-file items that are not themselves control
+// items (rather than by pointer identity, so a copy of the control works).
+func ChildStats(control *Item, all []*Item) (remaining, total int) {
+	if control == nil {
+		return 0, 0
+	}
+	for _, it := range all {
+		if it.file != control.file || it.IsControl() {
+			continue
+		}
+		total++
+		if s := it.Satus(); s == Open || s == Ongoing {
+			remaining++
+		}
+	}
+	return remaining, total
 }
 
 type Tag struct {

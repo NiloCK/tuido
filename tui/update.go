@@ -240,8 +240,18 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.tryCreateNewItem()
 		case "z":
 			t.currentSelection().Snooze()
-		case "enter":
-			t.setPeekMode()
+		case "enter", "l", "right":
+			// On a control item (and not already focused), dive into the
+			// file's focus view. Otherwise enter peeks; l/right are no-ops.
+			if t.focused == "" && t.currentSelection() != nil && t.currentSelection().IsControl() {
+				t.enterFocus(t.currentSelection().File())
+			} else if msg.String() == "enter" {
+				t.setPeekMode()
+			}
+		case "esc", "h", "left":
+			if t.focused != "" {
+				t.exitFocus()
+			}
 		case "q":
 			return t, tea.Quit
 		}

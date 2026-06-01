@@ -57,6 +57,81 @@ func TestNewTag(t *testing.T) {
 
 }
 
+func TestSystemTagsExcludedFromUserTags(t *testing.T) {
+	i := Item{raw: "[ ] do the thing #real ##file ##scope=docs"}
+
+	// ## tags must not leak into the user tag space
+	for _, tag := range i.Tags() {
+		if tag.Name() == "file" || tag.Name() == "scope" {
+			t.Errorf("system tag %q leaked into user Tags()", tag.Name())
+		}
+	}
+
+	// the genuine user tag is still present
+	foundReal := false
+	for _, tag := range i.Tags() {
+		if tag.Name() == "real" {
+			foundReal = true
+		}
+	}
+	if !foundReal {
+		t.Errorf("expected user tag 'real' in Tags(), got %v", i.Tags())
+	}
+
+	// system tags are parsed, with values
+	sys := i.SystemTags()
+	if len(sys) != 2 {
+		t.Fatalf("expected 2 system tags, got %d (%v)", len(sys), sys)
+	}
+	if sys[0].Name() != "file" || sys[0].Value() != "" {
+		t.Errorf("expected ##file with no value, got %q=%q", sys[0].Name(), sys[0].Value())
+	}
+	if sys[1].Name() != "scope" || sys[1].Value() != "docs" {
+		t.Errorf("expected ##scope=docs, got %q=%q", sys[1].Name(), sys[1].Value())
+	}
+}
+
+func TestIsControl(t *testing.T) {
+	control := Item{raw: "[@] Ship the parser rewrite ##file"}
+	plain := Item{raw: "[ ] write the lexer #due=2026-01-01"}
+
+	if !control.IsControl() {
+		t.Errorf("expected ##file item to be a control item")
+	}
+	if plain.IsControl() {
+		t.Errorf("did not expect plain item to be a control item")
+	}
+}
+
+func TestCollapseFileScoped(t *testing.T) {
+	mk := func(file, raw string) *Item { return &Item{file: file, raw: raw} }
+	items := []*Item{
+		mk("TODO.md", "[@] Ship the parser rewrite ##file"),
+		mk("TODO.md", "[x] sketch the grammar"),
+		mk("TODO.md", "[ ] write the lexer"),
+		mk("TODO.md", "[ ] write the parser"),
+		mk("notes.md", "[ ] standalone item"),
+	}
+
+	collapsed := CollapseFileScoped(items)
+
+	if len(collapsed) != 2 {
+		t.Fatalf("expected 2 items after collapse (control + standalone), got %d", len(collapsed))
+	}
+	if !collapsed[0].IsControl() {
+		t.Errorf("expected the control item to survive collapse")
+	}
+	if collapsed[1].Text() != "standalone item" {
+		t.Errorf("expected uncontrolled file's item to survive, got %q", collapsed[1].Text())
+	}
+
+	// rollup: 2 of 3 children open/ongoing (grammar is checked)
+	rem, tot := ChildStats(items[0], items)
+	if rem != 2 || tot != 3 {
+		t.Errorf("expected child stats (2, 3), got (%d, %d)", rem, tot)
+	}
+}
+
 func TestImportance(t *testing.T) {
 	items := []Item{
 		{

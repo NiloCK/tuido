@@ -46,6 +46,19 @@ func main() {
 			showVersionInfo()
 			return
 
+		case "focus":
+			if len(os.Args) < 3 {
+				fmt.Fprintln(os.Stderr, "Usage: tuido focus <file>")
+				os.Exit(1)
+			}
+			file := os.Args[2]
+			if _, err := os.Stat(file); err != nil {
+				fmt.Fprintf(os.Stderr, "cannot focus %q: %v\n", file, err)
+				os.Exit(1)
+			}
+			tui.RunFocused(file)
+			return
+
 		case "init":
 			tui.RunInitWizard()
 			return
@@ -81,6 +94,10 @@ func runList(path string, max int, inclSnoozed bool, inclDone bool) {
 	}
 
 	tui.SortItems(all)
+
+	// child rollups are computed against the full, pre-collapse set
+	fullSet := all
+	all = tuido.CollapseFileScoped(all)
 
 	var filtered []*tuido.Item
 	for _, item := range all {
@@ -131,6 +148,10 @@ func runList(path string, max int, inclSnoozed bool, inclDone bool) {
 			prevFile = baseName
 		}
 		entries[i].text = item.String()
+		if item.IsControl() {
+			rem, tot := tuido.ChildStats(item, fullSet)
+			entries[i].text += fmt.Sprintf(" [%d of %d]", rem, tot)
+		}
 	}
 
 	maxWidth := 0
@@ -177,6 +198,7 @@ Commands:
     --max N                 Limit output to N items
   create <text>           Create a new todo item
   add <text>              Alias for create
+  focus <file>            Open the TUI scoped to a single file
   init                    Create a local or global config (interactive)
   version                 Show version and platform information
   help                    Show this help

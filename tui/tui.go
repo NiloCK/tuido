@@ -28,7 +28,28 @@ type filterQuery struct {
 	fuzzyTerms []string
 }
 
-func Run() {
+func Run() { run("") }
+
+// RunFocused launches the TUI scoped to a single file (filezoom). Every item
+// in the file is shown in file order; group collapse is disabled.
+func RunFocused(file string) { run(file) }
+
+func run(focus string) {
+	// In focus mode, load only the focused file's items - this guarantees the
+	// focused path matches the items' File() exactly, sidestepping any
+	// relative/absolute path mismatch.
+	if focus != "" {
+		items := GetItems(focus)
+		tui := newTUI(items, runConfig)
+		tui.focused = focus
+
+		prog := tea.NewProgram(tui, tea.WithAltScreen())
+		if err := prog.Start(); err != nil {
+			panic(err)
+		}
+		return
+	}
+
 	wrkdirStr, err := os.Getwd() // [ ] only from cli flag? YES! or... follow .gitignore
 
 	if err != nil {
@@ -179,6 +200,11 @@ type tui struct {
 	pages           int
 	currentPage     int
 
+	// focused, when non-empty, scopes the list to a single file's items
+	// (file-scoped "focus" / filezoom). In focus mode, that file's control
+	// item is not collapsed - all of its items are shown in file order.
+	focused string
+
 	mode mode
 
 	filter     textinput.Model
@@ -295,6 +321,24 @@ func (t *tui) currentSelection() *tuido.Item {
 func (t *tui) populateRenderSelection() {
 	t.renderSelection = []*tuido.Item{}
 
+	// In focus mode, scope to the focused file and show every item in it
+	// (in file order), bypassing status filtering and group collapse.
+	if t.focused != "" {
+		for _, i := range t.items {
+			if i.File() == t.focused {
+				t.renderSelection = append(t.renderSelection, i)
+			}
+		}
+		t.applyFilter()
+		if len(t.filter.Value()) == 0 {
+			sort.SliceStable(t.renderSelection, func(a, b int) bool {
+				return t.renderSelection[a].Line() < t.renderSelection[b].Line()
+			})
+		}
+		t.setSelection(t.selection)
+		return
+	}
+
 	if t.itemsFilter == todo {
 		for _, i := range t.items {
 			if (i.Satus() == tuido.Ongoing || i.Satus() == tuido.Open) &&
@@ -312,6 +356,9 @@ func (t *tui) populateRenderSelection() {
 		}
 	}
 
+	// collapse file-scoped groups (##file) to their control item
+	t.renderSelection = tuido.CollapseFileScoped(t.renderSelection)
+
 	t.applyFilter()
 
 	// Only sort if no filter is active - preserve fuzzy search ranking
@@ -321,6 +368,20 @@ func (t *tui) populateRenderSelection() {
 
 	// ensure the previous selection value is still in range
 	t.setSelection(t.selection)
+}
+
+// enterFocus scopes the view to a single file (filezoom).
+func (t *tui) enterFocus(file string) {
+	t.focused = file
+	t.selection = 0
+	t.populateRenderSelection()
+}
+
+// exitFocus returns from filezoom to the aggregate view.
+func (t *tui) exitFocus() {
+	t.focused = ""
+	t.selection = 0
+	t.populateRenderSelection()
 }
 
 func (t *tui) applyFilter() {

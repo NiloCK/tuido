@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	"github.com/charmbracelet/lipgloss"
@@ -75,6 +76,15 @@ func (t tui) footer() string {
 	itemLoc := t.currentSelection().Location()
 	itemStr := footStyle.Render(itemLoc)
 
+	// recolor the statusbar to signal filezoom (focus mode)
+	if t.focused != "" {
+		focusStyle := footStyle.Copy().
+			Bold(true).
+			Foreground(lg.Color("#1a1a1a")).
+			Background(lg.Color("#a0d0ff"))
+		itemStr = focusStyle.Render("focus: " + filepath.Base(t.focused))
+	}
+
 	var right string
 
 	if t.err != nil {
@@ -86,7 +96,11 @@ func (t tui) footer() string {
 	} else {
 
 		if t.mode == navigation {
-			right = footStyle.Render(t.pagination())
+			if t.focused != "" {
+				right = footStyle.Copy().Faint(true).Render("[esc] - Exit focus")
+			} else {
+				right = footStyle.Render(t.pagination())
+			}
 		} else if t.mode == edit {
 			right = footStyle.Copy().Faint(true).
 				Render("[enter] - Save Changes,  [esc] - Discard Changes")
@@ -155,6 +169,7 @@ func (t tui) View() string {
 		controls += "n: new item\ne: edit item\nz: snooze item\n!: escalate item\n1: relax item\np: begin a pomodoro\n\n"
 		controls += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
 		controls += "[tab]: cycle between todo and done tabs\n/: text search and #tag #filtering\n?: enter help\n\n"
+		controls += "[enter]: peek item\nl / [right]: focus file (on a control item)\nh / [esc]: exit focus\n\n"
 		if len(t.notifs) > 0 {
 			controls += "u: upgrade to latest version\n"
 		}
@@ -169,15 +184,15 @@ func (t tui) View() string {
 		return lg.JoinVertical(lg.Left, notifications, lg.JoinHorizontal(lg.Top, "  ", controls, "    ", txt))
 	case configViewer:
 		configText := "\n\nCurrent Configuration:\n\n" + t.config.String()
-		
+
 		instructions := "\n\n[press any key to return to navigation]"
-		
+
 		content := lg.NewStyle().Width(40).Align(lg.Left).
 			Render(configText + instructions)
-		
+
 		notifications := strings.Join(t.notifs, "\n")
 		notifications = lg.NewStyle().Bold(true).Foreground(lg.Color("#ffbbaa")).Render(notifications)
-		
+
 		return lg.JoinVertical(lg.Left, notifications, lg.JoinHorizontal(lg.Top, "  ", content))
 	case upgrade:
 		return t.renderUpgradeView()
@@ -281,6 +296,13 @@ func (t tui) renderedItemCollection(width int) []string {
 // over multiple lines, and returns the text
 func (t tui) renderTuido(item tuido.Item, width int) string {
 	ret := item.String()
+
+	// In the aggregate view, a collapsed control item shows a child rollup.
+	if t.focused == "" && item.IsControl() {
+		rem, tot := tuido.ChildStats(&item, t.items)
+		ret += lg.NewStyle().Faint(true).Render(fmt.Sprintf(" [%d of %d]", rem, tot))
+	}
+
 	tags := item.Tags()
 
 	for _, tag := range tags {

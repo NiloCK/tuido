@@ -116,6 +116,16 @@ Include a `.tuido` file in individual directories to add filetypes for parsing a
 extensions=go,js,cpp
 ```
 
+To exclude directories or files from traversal, use glob patterns (note: `.gitignore` patterns are also respected automatically):
+
+```
+exclude=node_modules,vendor,dist
+```
+
+```
+exclude=*.gen.go,*.min.js
+```
+
 To configure the friction threshold that triggers the deterrence nag when adding items:
 
 ```

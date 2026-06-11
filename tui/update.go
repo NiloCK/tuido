@@ -173,6 +173,9 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
+		// clear any transient flash message on the next keypress
+		t.flash = ""
+
 		switch msg.String() {
 		// navigation
 		case "up":
@@ -238,6 +241,10 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			t.setEditMode()
 		case "n":
 			t.tryCreateNewItem()
+		case "c":
+			t.copyCurrentItem(false)
+		case "C":
+			t.copyCurrentItem(true)
 		case "z":
 			t.currentSelection().Snooze()
 		case "enter":
@@ -251,6 +258,36 @@ func (t tui) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		t.w = msg.Width
 	}
 	return t, nil
+}
+
+// copyCurrentItem copies the selected item to the system clipboard. When
+// withMeta is true it includes the status box and "(file:line)" location;
+// otherwise just the item's body text is copied.
+func (t *tui) copyCurrentItem(withMeta bool) {
+	item := t.currentSelection()
+	if item == nil {
+		return
+	}
+
+	var text string
+	if withMeta {
+		text = fmt.Sprintf("%s (%s)", item.String(), item.Location())
+	} else {
+		text = item.Text()
+	}
+
+	backend, err := writeClipboard(text)
+	if err != nil {
+		t.flash = "copy failed: " + err.Error()
+		return
+	}
+
+	what := "copied item"
+	if withMeta {
+		what = "copied item + metadata"
+	}
+	// surface the backend so an ineffective osc52 fallback is diagnosable.
+	t.flash = fmt.Sprintf("%s (%s)", what, backend)
 }
 
 func (t *tui) tryCreateNewItem() {

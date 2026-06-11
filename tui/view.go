@@ -86,7 +86,11 @@ func (t tui) footer() string {
 	} else {
 
 		if t.mode == navigation {
-			right = footStyle.Render(t.pagination())
+			if t.flash != "" {
+				right = footStyle.Copy().Faint(true).Render(t.flash)
+			} else {
+				right = footStyle.Render(t.pagination())
+			}
 		} else if t.mode == edit {
 			right = footStyle.Copy().Faint(true).
 				Render("[enter] - Save Changes,  [esc] - Discard Changes")
@@ -152,7 +156,7 @@ func (t tui) View() string {
 	case help:
 		controls := "\n[press ? again to view your current config]\n"
 		controls += "[press any other key to exit help]\n\n"
-		controls += "n: new item\ne: edit item\nz: snooze item\n!: escalate item\n1: relax item\np: begin a pomodoro\n\n"
+		controls += "n: new item\ne: edit item\nz: snooze item\n!: escalate item\n1: relax item\np: begin a pomodoro\nc: copy item\nC: copy item + metadata\n\n"
 		controls += "x: mark done\ns: mark obsolete (strikethrough)\na: mark ongoing (at)\n[space]: mark open\n\n"
 		controls += "[tab]: cycle between todo and done tabs\n/: text search and #tag #filtering\n?: enter help\n\n"
 		if len(t.notifs) > 0 {

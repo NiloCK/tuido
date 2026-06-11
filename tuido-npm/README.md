@@ -30,6 +30,7 @@ tuido
 - Search/filter todos by keywords
 - One-button pomodoro mode for focused work
 - Progressive snooze function
+- Copy items to clipboard (`c` for text, `C` for text + status + source location)
 
 See the [full documentation](https://github.com/NiloCK/tuido) for details.
 

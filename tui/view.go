@@ -291,6 +291,28 @@ func (t tui) renderTuido(item tuido.Item, width int) string {
 		ret = strings.ReplaceAll(ret, "#"+tag.String(), t.tagColors[tag.Name()].Render("#"+tag.String()))
 	}
 
+	if imp := item.Importance(); imp > 0 {
+		var exclamStyle lg.Style
+		switch {
+		case imp >= 5:
+			exclamStyle = lg.NewStyle().Bold(true).Foreground(lg.Color("#ffffff")).Background(lg.Color("#ff2222")).Blink(true)
+		case imp == 4:
+			exclamStyle = lg.NewStyle().Bold(true).Foreground(lg.Color("#ffffff")).Background(lg.Color("#ff2222"))
+		case imp == 3:
+			exclamStyle = lg.NewStyle().Bold(true).Foreground(lg.Color("#ff2222"))
+		case imp == 2:
+			exclamStyle = lg.NewStyle().Bold(true).Foreground(lg.Color("#ff4444"))
+		default:
+			exclamStyle = lg.NewStyle().Bold(true).Foreground(lg.Color("#ff8866"))
+		}
+		text := ret[4:]
+		prefixLen := 0
+		for prefixLen < len(text) && (text[prefixLen] == '.' || text[prefixLen] == '!') {
+			prefixLen++
+		}
+		ret = ret[:4] + exclamStyle.Render(text[:prefixLen]) + text[prefixLen:]
+	}
+
 	// +2 here because of the leading 'cursor' space
 	if len(ret)+2 > width {
 		rowsRequired := (len(ret) - 4) / (width - 6) // -6 here instead of 4 because of the cursor spaces

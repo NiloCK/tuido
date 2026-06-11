@@ -199,6 +199,10 @@ type tui struct {
 
 	tagColors map[string]lg.Style
 
+	// flash is a transient footer message (eg. "copied") shown until the
+	// next keypress in navigation mode.
+	flash string
+
 	// height of the window
 	h int
 	// width of the window

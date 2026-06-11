@@ -65,6 +65,8 @@ Interactive setup wizard. Creates a local (`./.tuido`) or global (`~/.config/tui
   - **p**: enter a pomodoro session for item
   - **z**: snooze this item (set a later active date)
   - **!**/**1**: bump/decrement the `importance` modifier on this item
+  - **c**: copy item text to clipboard
+  - **C**: copy item text + status + source location to clipboard
 - **[tab]**: switch between pending and done items
 - **/**: plaintext search items, and/or #filter #by #tags
 - **[up]**, **[down]**: navigate items
@@ -160,7 +162,7 @@ GPL
 
 ## Roadmap
 
-- [ ] #feat allow for copying current item to clipboard (via `ctrl-C?`)
+- [x] #feat allow for copying current item to clipboard (via `ctrl-C?`)
 - [ ] #feat make new-items repsect the filetype being written to (leading comment slashes for code files, leading bullet for readme, etc)
 - [@] process #dates
   - [x] from items themselves
